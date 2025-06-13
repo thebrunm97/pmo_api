@@ -5,6 +5,10 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Adicionamos o namespace 'api/v1/' para versionar nossa API.
+    
     # Todas as requisições para a nossa app passarão por este prefixo.
     path('api/v1/', include('form_pmo.urls')),
+
+      # Adicione esta linha para habilitar o login na API Navegável
+    path('api-auth/', include('rest_framework.urls')),
 ]

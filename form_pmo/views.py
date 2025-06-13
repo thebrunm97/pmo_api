@@ -27,3 +27,14 @@ class PMOViewSet(viewsets.ModelViewSet):
         Define o usuário logado como o 'owner' do novo PMO ao criá-lo.
         """
         serializer.save(owner=self.request.user)
+
+        from django.http import HttpResponse
+
+        def home(request):
+            """
+            Página inicial da API PMO.
+
+            Retorna uma mensagem simples de boas-vindas.
+            """
+            return HttpResponse("Bem-vindo à API PMO!")
+
