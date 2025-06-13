@@ -1,14 +1,22 @@
-# pmo_api/urls.py (MODIFIQUE ESTE ARQUIVO EXISTENTE)
+# pmo_api/urls.py
+
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Adicionamos o namespace 'api/v1/' para versionar nossa API.
-    
-    # Todas as requisições para a nossa app passarão por este prefixo.
+
+    # Nossas URLs da API
     path('api/v1/', include('form_pmo.urls')),
 
-      # Adicione esta linha para habilitar o login na API Navegável
+    # Endpoints de autenticação JWT
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Mantemos o 'api-auth' para o login/logout na API Navegável durante o desenvolvimento
     path('api-auth/', include('rest_framework.urls')),
 ]
