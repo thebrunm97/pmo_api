@@ -1,4 +1,4 @@
-# DOUGLAS+YAM AMOR ETERNO <3 cole este código completo em form_pmo/models.py
+# form_pmo/models.py
 
 import uuid
 from django.db import models
