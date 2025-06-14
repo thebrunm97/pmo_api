@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from datetime import timedelta
+from datetime import timedelta # <--- Manter esta importação aqui no topo
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     # Apps de terceiros
     'rest_framework',
+    'drf_spectacular',      # Necessário para documentação OpenAPI
 
     # Nossas apps
     'form_pmo',
@@ -108,9 +110,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br' # <--- ALTERAÇÃO (Bônus): Para português do Brasil.
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo' # <--- ALTERAÇÃO (Bônus): Para o fuso horário de Uberlândia/Brasil.
 
 USE_I18N = True
 
@@ -127,7 +129,14 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ==============================================================================
+# CONFIGURAÇÕES DO DJANGO REST FRAMEWORK E DRF-SPECTACULAR
+# ==============================================================================
+
 REST_FRAMEWORK = {
+    # Define o drf-spectacular como o gerador de schema padrão para o DRF
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', # <--- ADIÇÃO IMPORTANTE
+
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -135,15 +144,21 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     )
 }
-# Adicione a importação FALTANTE aqui, logo acima de onde é usada
-from datetime import timedelta
 
-# Bloco que você já tem, mas que estava causando o erro
+# (Opcional, mas recomendado) Adiciona metadados à documentação
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API do Plano de Manejo Orgânico (PMO)',
+    'DESCRIPTION': 'Documentação interativa da API para criação e gerenciamento de Planos de Manejo Orgânico.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,  # Esconde o link do schema bruto na UI
+}
+
+
+# Configuração do SIMPLE_JWT para controle da validade dos tokens
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-}
+
+# A importação duplicada de 'timedelta' no final do arquivo original foi removida 
+# por já estar declarada no topo do arquivo.

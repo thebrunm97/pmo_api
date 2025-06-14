@@ -1,4 +1,5 @@
 # form_pmo/views.py
+
 from rest_framework import viewsets, permissions
 from .models import PMO
 from .serializers import PMOSerializer
@@ -17,24 +18,15 @@ class PMOViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Esta view deve retornar uma lista de todos os PMOs
-        para o usuário atualmente autenticado.
+        para o usuário atualmente autenticado, ordenados pelo mais recente.
         """
-        user = self.request.user
-        return PMO.objects.filter(owner=user).order_by('-updated_at')
+        # self.request.user está disponível aqui graças ao IsAuthenticated
+        return PMO.objects.filter(owner=self.request.user).order_by('-updated_at')
 
     def perform_create(self, serializer):
         """
         Define o usuário logado como o 'owner' do novo PMO ao criá-lo.
         """
+        # O DRF passa o serializer validado para este método.
+        # Nós apenas adicionamos o 'owner' antes de salvar.
         serializer.save(owner=self.request.user)
-
-        from django.http import HttpResponse
-
-        def home(request):
-            """
-            Página inicial da API PMO.
-
-            Retorna uma mensagem simples de boas-vindas.
-            """
-            return HttpResponse("Bem-vindo à API PMO!")
-

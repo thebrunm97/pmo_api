@@ -7,5 +7,6 @@ router = DefaultRouter()
 router.register(r'pmos', PMOViewSet, basename='pmo')
 
 urlpatterns = [
-        path('', include(router.urls)),           # Rotas do DRF
+    
+    path('', include(router.urls)),           # Rotas do DRF
 ]
