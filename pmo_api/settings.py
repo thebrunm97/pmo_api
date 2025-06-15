@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders', # Necessário para permitir CORS (Cross-Origin Resource Sharing)
+    'django_extensions', # Necessário para comandos extras no Django (opcional, mas útil)
     'django_filters', # Necessário para filtros avançados
     'rest_framework_simplejwt', # Necessário para autenticação JWT  
 
@@ -54,6 +56,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # <-- ADIÇÃO: Middleware para CORS
+    'django.middleware.common.BrokenLinkEmailsMiddleware', # <-- ADIÇÃO: Middleware para emails de links quebrados
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -166,5 +170,16 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
+# ==============================================================================
+# CONFIGURAÇÃO DE CORS
+# ==============================================================================
+# Adicione esta nova variável no final do arquivo
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # A origem padrão do servidor de dev do Vite (React)
+    "http://127.0.0.1:5173",
+]
+
 # A importação duplicada de 'timedelta' no final do arquivo original foi removida 
 # por já estar declarada no topo do arquivo.
+
