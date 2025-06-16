@@ -240,39 +240,54 @@ class AnimaisSubsistenciaCompanhiaOrnamentaisSerializer(serializers.Serializer):
     lista_animais_subsistencia = serializers.ListField(
         child=AnimalSubsistenciaItemSerializer(), required=False
     )
-    
+
 # --- Seção 5: Produção Terceirizada ---
 class AquisicaoProdutosTerceirosSerializer(serializers.Serializer):
     produtos_terceirizados = serializers.ListField(child=ProdutoTerceirizadoItemSerializer(), required=False)
 
 # --- Seção 6: Aspectos Ambientais ---
+# --- Sub-serializers para a Seção 6 ---
+
 class PromocaoBiodiversidadeSerializer(serializers.Serializer):
-    medidas_promocao_biodiversidade = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
+    medidas_promocao_biodiversidade = serializers.CharField(required=True, allow_blank=True)
 
 class FonteAguaSerializer(serializers.Serializer):
-    fonte_agua = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
+    fonte_agua = serializers.CharField(required=True, allow_blank=True)
     
 class ControleUsoAguaSerializer(serializers.Serializer):
-    controle_uso_agua = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
+    controle_uso_agua = serializers.CharField(required=True, allow_blank=True)
     
 class RiscoContaminacaoAguaSerializer(serializers.Serializer):
     ha_risco_contaminacao_agua = serializers.BooleanField(required=True)
-    qual_risco_contaminacao_agua = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
+    qual_risco_contaminacao_agua = serializers.CharField(required=False, allow_blank=True)
 
 class RiscosContaminacaoUnidadeProducaoSerializer(serializers.Serializer):
-    riscos_contaminacao_unidade_producao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
+    riscos_contaminacao_unidade_producao = serializers.CharField(required=True, allow_blank=True)
 
 class MedidasMinimizarRiscosContaminacaoSerializer(serializers.Serializer):
-    medidas_minimizar_riscos_contaminacao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
+    medidas_minimizar_riscos_contaminacao = serializers.CharField(required=True, allow_blank=True)
 
 class PraticasManejoResiduosOrganicosSerializer(serializers.Serializer):
-    praticas_manejo_residuos_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
+    praticas_manejo_residuos_organicos = serializers.CharField(required=True, allow_blank=True)
 
 class CompostagemSerializer(serializers.Serializer):
-    descricao_compostagem = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
+    descricao_compostagem = serializers.CharField(required=False, allow_blank=True)
 
 class TratamentoLixoSerializer(serializers.Serializer):
-    tratamento_lixo = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
+    tratamento_lixo = serializers.CharField(required=True, allow_blank=True)
+
+# --- Serializer Principal da Seção 6 ---
+
+class Secao6AspectosAmbientaisSerializer(serializers.Serializer):
+    promocao_biodiversidade = PromocaoBiodiversidadeSerializer(required=False)
+    fonte_agua = FonteAguaSerializer(required=False)
+    controle_uso_agua = ControleUsoAguaSerializer(required=False)
+    risco_contaminacao_agua = RiscoContaminacaoAguaSerializer(required=False)
+    riscos_contaminacao_unidade_producao = RiscosContaminacaoUnidadeProducaoSerializer(required=False)
+    medidas_minimizar_riscos_contaminacao = MedidasMinimizarRiscosContaminacaoSerializer(required=False)
+    praticas_manejo_residuos_organicos = PraticasManejoResiduosOrganicosSerializer(required=False)
+    compostagem = CompostagemSerializer(required=False)
+    tratamento_lixo = TratamentoLixoSerializer(required=False)
 
 # --- Seção 7: Aspectos Sociais ---
 class MembrosFamiliaProducaoSerializer(serializers.Serializer):
@@ -498,20 +513,36 @@ class Secao4AnimaisServicoSubsistenciaCompanhiaSerializer(serializers.Serializer
     ha_animais_servico_subsistencia_companhia = HaAnimaisServicoSubsistenciaCompanhiaSerializer(required=True)
     animais_servico = AnimaisServicoSerializer(required=False)
     animais_subsistencia_companhia_ornamentais = AnimaisSubsistenciaCompanhiaOrnamentaisSerializer(required=False)
-    
+
+# --- Serializer Principal da Seção 5 ---
 class Secao5ProducaoTerceirizadaSerializer(serializers.Serializer):
-    aquisicao_produtos_terceiros = AquisicaoProdutosTerceirosSerializer(required=False)
+    produtos_terceirizados = serializers.ListField(
+        child=ProdutoTerceirizadoItemSerializer(), required=False
+    )
     
 class Secao6AspectosAmbientaisSerializer(serializers.Serializer):
-    promocao_biodiversidade = PromocaoBiodiversidadeSerializer(required=True)
-    fonte_agua = FonteAguaSerializer(required=True)
-    controle_uso_agua = ControleUsoAguaSerializer(required=True)
-    risco_contaminacao_agua = RiscoContaminacaoAguaSerializer(required=True)
-    riscos_contaminacao_unidade_producao = RiscosContaminacaoUnidadeProducaoSerializer(required=True)
-    medidas_minimizar_riscos_contaminacao = MedidasMinimizarRiscosContaminacaoSerializer(required=True)
-    praticas_manejo_residuos_organicos = PraticasManejoResiduosOrganicosSerializer(required=True)
-    compostagem = CompostagemSerializer(required=False)
-    tratamento_lixo = TratamentoLixoSerializer(required=True)
+    # Campos que armazenam strings de checkboxes
+    promocao_biodiversidade = serializers.CharField(required=False, allow_blank=True)
+    fonte_agua = serializers.CharField(required=False, allow_blank=True)
+    riscos_contaminacao_unidade_producao = serializers.CharField(required=False, allow_blank=True)
+    praticas_manejo_residuos_organicos = serializers.CharField(required=False, allow_blank=True)
+    
+    # Campos de texto simples
+    controle_uso_agua = serializers.CharField(required=False, allow_blank=True)
+    medidas_minimizar_riscos_contaminacao = serializers.CharField(required=False, allow_blank=True)
+    compostagem = serializers.CharField(required=False, allow_blank=True)
+    tratamento_lixo = serializers.CharField(required=False, allow_blank=True)
+
+    # --- CAMPO CORRIGIDO ---
+    # Este campo agora é um booleano simples no nível principal da seção
+    ha_risco_contaminacao_agua = serializers.BooleanField(required=False)
+    qual_risco_contaminacao_agua = serializers.CharField(required=False, allow_blank=True)
+    
+    riscos_contaminacao_unidade_producao = serializers.CharField(required=True, allow_blank=True)
+    medidas_minimizar_riscos_contaminacao = serializers.CharField(required=True, allow_blank=True)
+    praticas_manejo_residuos_organicos = serializers.CharField(required=True, allow_blank=True)
+    compostagem = serializers.CharField(required=False, allow_blank=True)
+    tratamento_lixo = serializers.CharField(required=True, allow_blank=True)
 
 class Secao7AspectosSociaisSerializer(serializers.Serializer):
     membros_familia_producao = MembrosFamiliaProducaoSerializer(required=True)
@@ -595,19 +626,19 @@ class FormularioPMOSerializer(serializers.Serializer):
     secao_1_descricao_propriedade = Secao1DescricaoPropriedadeSerializer(required=True)
     secao_2_atividades_produtivas_organicas = Secao2AtividadesProdutivasOrganicasSerializer(required=True)
     secao_3_atividades_produtivas_nao_organicas = Secao3AtividadesProdutivasNaoOrganicasSerializer(required=False)
-    secao_4_animais_servico_subsistencia_companhia = Secao4AnimaisServicoSubsistenciaCompanhiaSerializer(required=True)
+    secao_4_animais_servico_subsistencia_companhia = Secao4AnimaisServicoSubsistenciaCompanhiaSerializer(required=False)
     secao_5_producao_terceirizada = Secao5ProducaoTerceirizadaSerializer(required=False)
-    secao_6_aspectos_ambientais = Secao6AspectosAmbientaisSerializer(required=True)
-    secao_7_aspectos_sociais = Secao7AspectosSociaisSerializer(required=True)
-    secao_8_insumos_equipamentos = Secao8InsumosEquipamentosSerializer(required=True)
-    secao_9_propagacao_vegetal = Secao9PropagacaoVegetalSerializer(required=True)
-    secao_10_fitossanidade = Secao10FitossanidadeSerializer(required=True)
-    secao_11_colheita = Secao11ColheitaSerializer(required=True)
-    secao_12_pos_colheita = Secao12PosColheitaSerializer(required=True)
+    secao_6_aspectos_ambientais = Secao6AspectosAmbientaisSerializer(required=False)
+    secao_7_aspectos_sociais = Secao7AspectosSociaisSerializer(required=False)
+    secao_8_insumos_equipamentos = Secao8InsumosEquipamentosSerializer(required=False)
+    secao_9_propagacao_vegetal = Secao9PropagacaoVegetalSerializer(required=False)
+    secao_10_fitossanidade = Secao10FitossanidadeSerializer(required=False)
+    secao_11_colheita = Secao11ColheitaSerializer(required=False)
+    secao_12_pos_colheita = Secao12PosColheitaSerializer(required=False)
     secao_13_producao_animal = Secao13ProducaoAnimalSerializer(required=False)
-    secao_14_comercializacao = Secao14ComercializacaoSerializer(required=True)
-    secao_15_rastreabilidade = Secao15RastreabilidadeSerializer(required=True)
-    secao_16_sac = Secao16SacSerializer(required=True)
+    secao_14_comercializacao = Secao14ComercializacaoSerializer(required=False)
+    secao_15_rastreabilidade = Secao15RastreabilidadeSerializer(required=False)
+    secao_16_sac = Secao16SacSerializer(required=False)
     secao_17_opiniao = Secao17OpiniaoSerializer(required=False)
     secao_18_anexos = Secao18AnexosSerializer(required=False)
     secao_avaliacao_plano_manejo = SecaoAvaliacaoPlanoManejoSerializer(required=False)
@@ -624,12 +655,11 @@ class PMOSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PMO
-        # Lista de campos ATUALIZADA para incluir o novo campo 'nome_identificador'
         fields = [
             'id',
             'owner',
             'owner_username',
-            'nome_identificador', # <-- CAMPO ADICIONADO
+            'nome_identificador', 
             'status',
             'version',
             'form_data',
