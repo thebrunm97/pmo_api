@@ -25,8 +25,11 @@ class PMO(models.Model):
         verbose_name="Produtor Responsável",
         related_name="pmos"
     )
+
+    nome_identificador = models.CharField(max_length=200, default='Plano de Manejo sem nome')
+    
     status = models.CharField(
-        max_length=10,
+        max_length=500,
         choices=Status.choices,
         default=Status.RASCUNHO,
         verbose_name="Status do Plano"
@@ -45,4 +48,5 @@ class PMO(models.Model):
         ordering = ['-updated_at']
 
     def __str__(self):
-        return f"PMO de {self.owner.username} (v{self.version}) - {self.get_status_display()}"
+        # Atualizando o __str__ para usar o novo nome, fica mais informativo
+        return f"{self.nome_identificador} (v{self.version}) - {self.owner.username}"

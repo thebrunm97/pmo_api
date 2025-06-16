@@ -204,52 +204,79 @@ class ProcessamentoProdutosOrigemVegetalNaoOrganicoSerializer(serializers.Serial
 class ProcessamentoProdutosOrigemAnimalNaoOrganicoSerializer(serializers.Serializer):
     produtos_processamento_animal_nao_organico = serializers.ListField(child=ProdutoProcessamentoNaoOrganicoItemSerializer(), required=False)
 
-# --- Seção 4: Animais de Serviço, Subsistência, Companhia ---
+# =======================================================================
+# SEÇÃO 4: ANIMAIS DE SERVIÇO, SUBSISTÊNCIA, ETC. (VERSÃO ATUALIZADA)
+# =======================================================================
+
+# --- Item para a lista de Animais de Serviço ---
+class AnimalServicoItemSerializer(serializers.Serializer):
+    especie = serializers.CharField(required=True)
+    quantidade = serializers.IntegerField(required=True)
+    manejo = serializers.CharField(required=True, style={'base_template': 'textarea.html'})
+    insumos = serializers.CharField(required=True, style={'base_template': 'textarea.html'})
+    tratamento_dejetos = serializers.CharField(required=True, style={'base_template': 'textarea.html'})
+
+# --- Item para a lista de Animais de Subsistência/Companhia ---
+class AnimalSubsistenciaItemSerializer(serializers.Serializer):
+    especie = serializers.CharField(required=True)
+    quantidade = serializers.IntegerField(required=True)
+    insumos = serializers.CharField(required=True, style={'base_template': 'textarea.html'})
+    tratamento_dejetos = serializers.CharField(required=True, style={'base_template': 'textarea.html'})
+    circulacao_area_organica = serializers.CharField(required=True, style={'base_template': 'textarea.html'})
+
+# --- Serializers principais da Subseção ---
+
 class HaAnimaisServicoSubsistenciaCompanhiaSerializer(serializers.Serializer):
     ha_animais_servico_subsistencia_companhia = serializers.BooleanField(required=True)
 
 class AnimaisServicoSerializer(serializers.Serializer):
-    descricao_animais_servico = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
+    # Agora espera uma lista de animais de serviço
+    lista_animais_servico = serializers.ListField(
+        child=AnimalServicoItemSerializer(), required=False
+    )
 
 class AnimaisSubsistenciaCompanhiaOrnamentaisSerializer(serializers.Serializer):
-    descricao_animais_subsistencia_companhia_ornamentais = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
-
+    # Agora espera uma lista de animais de subsistência
+    lista_animais_subsistencia = serializers.ListField(
+        child=AnimalSubsistenciaItemSerializer(), required=False
+    )
+    
 # --- Seção 5: Produção Terceirizada ---
 class AquisicaoProdutosTerceirosSerializer(serializers.Serializer):
     produtos_terceirizados = serializers.ListField(child=ProdutoTerceirizadoItemSerializer(), required=False)
 
 # --- Seção 6: Aspectos Ambientais ---
 class PromocaoBiodiversidadeSerializer(serializers.Serializer):
-    medidas_promocao_biodiversidade = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    medidas_promocao_biodiversidade = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class FonteAguaSerializer(serializers.Serializer):
-    fonte_agua = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    fonte_agua = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 class ControleUsoAguaSerializer(serializers.Serializer):
-    controle_uso_agua = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    controle_uso_agua = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 class RiscoContaminacaoAguaSerializer(serializers.Serializer):
     ha_risco_contaminacao_agua = serializers.BooleanField(required=True)
     qual_risco_contaminacao_agua = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
 
 class RiscosContaminacaoUnidadeProducaoSerializer(serializers.Serializer):
-    riscos_contaminacao_unidade_producao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    riscos_contaminacao_unidade_producao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class MedidasMinimizarRiscosContaminacaoSerializer(serializers.Serializer):
-    medidas_minimizar_riscos_contaminacao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    medidas_minimizar_riscos_contaminacao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class PraticasManejoResiduosOrganicosSerializer(serializers.Serializer):
-    praticas_manejo_residuos_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    praticas_manejo_residuos_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class CompostagemSerializer(serializers.Serializer):
     descricao_compostagem = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
 
 class TratamentoLixoSerializer(serializers.Serializer):
-    tratamento_lixo = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    tratamento_lixo = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 # --- Seção 7: Aspectos Sociais ---
 class MembrosFamiliaProducaoSerializer(serializers.Serializer):
-    membros_familia_producao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    membros_familia_producao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 class MaoDeObraNaoFamiliarSerializer(serializers.Serializer):
     ha_mao_de_obra_nao_familiar = serializers.BooleanField(required=True)
@@ -257,10 +284,10 @@ class MaoDeObraNaoFamiliarSerializer(serializers.Serializer):
     relacao_trabalhista = serializers.CharField(required=False, allow_blank=True)
 
 class IncentivoAtividadesEducativasSerializer(serializers.Serializer):
-    incentiva_atividades_educativas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    incentiva_atividades_educativas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class RelacionamentoOutrosProdutoresSerializer(serializers.Serializer):
-    relacionamento_outros_produtores = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    relacionamento_outros_produtores = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 # --- Seção 8: Insumos/Equipamentos ---
 class InsumosMelhorarFertilidadeSerializer(serializers.Serializer):
@@ -277,7 +304,7 @@ class OrigemSementesMudasOrganicasSerializer(serializers.Serializer):
     sementes_mudas_organicas = serializers.ListField(child=SementeMudaOrganicaItemSerializer(), required=True)
 
 class TratamentoSementesMudasSerializer(serializers.Serializer):
-    tratamento_sementes_mudas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    tratamento_sementes_mudas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 class ManejoProducaoPropriaSerializer(serializers.Serializer):
     manejo_producao_propria = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
@@ -286,7 +313,7 @@ class OrigemSementesMudasNaoOrganicasSerializer(serializers.Serializer):
     sementes_mudas_nao_organicas = serializers.ListField(child=SementeMudaNaoOrganicaItemSerializer(), required=False)
 
 class PosturaUsoMateriaisTransgenicosOrganicaSerializer(serializers.Serializer):
-    postura_uso_materiais_transgenicos_organica = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    postura_uso_materiais_transgenicos_organica = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 class CuidadosUsoMateriaisTransgenicosNaoOrganicaSerializer(serializers.Serializer):
     cuidados_uso_materiais_transgenicos_nao_organica = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
@@ -296,18 +323,18 @@ class ControlePragasDoencasSerializer(serializers.Serializer):
     controle_pragas_doencas = serializers.ListField(child=ControlePragaDoencaItemSerializer(), required=True)
     
 class ManejoPlantasDaninhasSerializer(serializers.Serializer):
-    manejo_plantas_daninhas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    manejo_plantas_daninhas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 # --- Seção 11: Colheita ---
 class ControleColheitaOrganicosSerializer(serializers.Serializer):
-    controle_colheita_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    controle_colheita_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True  )
 
 class ControleColheitaNaoOrganicosSerializer(serializers.Serializer):
     controle_colheita_nao_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
 
 # --- Seção 12: Pós-Colheita ---
 class HigienizacaoProdutosOrganicosSerializer(serializers.Serializer):
-    higienizacao_produtos_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    higienizacao_produtos_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 class ProcessamentoProducaoOrganicaSerializer(serializers.Serializer):
     ha_processamento_producao_organica = serializers.BooleanField(required=True)
@@ -318,7 +345,7 @@ class ProcessamentoProducaoParalelaSerializer(serializers.Serializer):
     descricao_processamento_producao_paralela = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
 
 class HigienizacaoEquipamentosInstalacoesSerializer(serializers.Serializer):
-    higienizacao_equipamentos_instalacoes = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    higienizacao_equipamentos_instalacoes = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class AcondicionamentoProdutosSerializer(serializers.Serializer):
     embalados_envasados_produtos = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
@@ -331,13 +358,13 @@ class RotulagemProdutosSerializer(serializers.Serializer):
     descricao_rotulagem = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
     
 class ProcedimentosArmazenamentoSerializer(serializers.Serializer):
-    procedimentos_armazenamento = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    procedimentos_armazenamento = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class ControlePragasInstalacoesSerializer(serializers.Serializer):
-    controle_pragas_instalacoes = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    controle_pragas_instalacoes = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class TransporteProdutosOrganicosSerializer(serializers.Serializer):
-    transporte_produtos_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    transporte_produtos_organicos = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 # --- Seção 13: Produção Animal ---
 class TecnicasMelhoriaPastosSerializer(serializers.Serializer):
@@ -393,21 +420,21 @@ class ManejoSanitarioAnimalSerializer(serializers.Serializer):
 
 # --- Seção 14: Comercialização ---
 class CanaisComercializacaoSerializer(serializers.Serializer):
-    canais_comercializacao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    canais_comercializacao = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 # --- Seção 15: Rastreabilidade ---
 class RegistrosRastreabilidadeSerializer(serializers.Serializer):
-    registros_rastreabilidade = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    registros_rastreabilidade = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 class FrequenciaRegistrosSerializer(serializers.Serializer):
-    frequencia_registros_anotacoes = serializers.CharField(required=True)
+    frequencia_registros_anotacoes = serializers.CharField(required=True, allow_blank=True)
 
 # --- Seção 16: SAC ---
 class FormasReclamacoesSerializer(serializers.Serializer):
-    formas_reclamacoes_criticas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    formas_reclamacoes_criticas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     
 class TratamentoReclamacoesSerializer(serializers.Serializer):
-    tratamento_reclamacoes_criticas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    tratamento_reclamacoes_criticas = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
 
 # --- Seção 17: Opinião ---
 class PrincipaisProblemasSerializer(serializers.Serializer):
@@ -425,8 +452,8 @@ class ListaAnexosSerializer(serializers.Serializer):
     
 # --- Seção Avaliação ---
 class EspacoOacSerializer(serializers.Serializer):
-    data_recebimento_plano_manejo = serializers.DateField(required=False)
-    
+    data_recebimento_plano_manejo = serializers.DateField(required=False, allow_null=True)
+
 class RiscosPotenciaisSerializer(serializers.Serializer):
     riscos_potenciais_unidade_produtiva = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
 
@@ -437,7 +464,7 @@ class StatusDocumentoSerializer(serializers.Serializer):
     status_documento = serializers.CharField(required=False, allow_blank=True)
     responsavel_analise_conclusao = serializers.CharField(required=False, allow_blank=True)
     assinatura_responsavel = serializers.CharField(required=False, allow_blank=True)
-    data_analise = serializers.DateField(required=False)
+    data_analise = serializers.DateField(required=False, allow_null=True) # Note: allow_null=True permite que o campo seja nulo
 
 # =============================================================================
 # Bloco de Lego: Serializers para Seções Principais
@@ -454,7 +481,7 @@ class Secao1DescricaoPropriedadeSerializer(serializers.Serializer):
     separacao_areas_producao_paralela = SeparacaoAreasProducaoParalelaSerializer(required=False)
 
 class Secao2AtividadesProdutivasOrganicasSerializer(serializers.Serializer):
-    produtos_certificados = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
+    produtos_certificados = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, allow_blank=True)
     producao_primaria_vegetal = ProducaoPrimariaVegetalSerializer(required=True)
     producao_primaria_animal = ProducaoPrimariaAnimalSerializer(required=False)
     processamento_produtos_origem_vegetal = ProcessamentoProdutosOrigemVegetalSerializer(required=False)
@@ -586,33 +613,30 @@ class FormularioPMOSerializer(serializers.Serializer):
     secao_avaliacao_plano_manejo = SecaoAvaliacaoPlanoManejoSerializer(required=False)
 
 # =============================================================================
-# Serializer Principal do Modelo PMO
+# Serializer Principal do Modelo PMO (VERSÃO ATUALIZADA)
 # =============================================================================
 
 class PMOSerializer(serializers.ModelSerializer):
-   # O campo form_data usará nosso serializer aninhado para validação
+    # O campo form_data usará nosso serializer aninhado para validação
     form_data = FormularioPMOSerializer()
-    # Adicionamos um campo extra (apenas para leitura) para mostrar o username,
-    # que é mais útil na resposta da API do que apenas o ID do usuário.
+    # Adicionamos um campo extra (apenas para leitura) para mostrar o username
     owner_username = serializers.CharField(source='owner.username', read_only=True)
 
     class Meta:
         model = PMO
-        # --- CORREÇÃO AQUI ---
-        # Corrigimos a lista de campos para corresponder ao modelo PMO.
-        # Removemos 'produtor_nome' e adicionamos 'owner' e 'version'.
+        # Lista de campos ATUALIZADA para incluir o novo campo 'nome_identificador'
         fields = [
             'id',
-            'owner',            # O ID do owner (usuário)
-            'owner_username',   # O username do owner (adicionado para clareza)
+            'owner',
+            'owner_username',
+            'nome_identificador', # <-- CAMPO ADICIONADO
             'status',
-            'version',          # O campo version que estava faltando
+            'version',
             'form_data',
             'created_at',
             'updated_at'
         ]
-        # Adicionamos 'owner' aos campos de apenas leitura, pois ele é
-        # definido automaticamente pela view e não deve ser enviado pelo cliente.
+        # Campos que são apenas para leitura e não podem ser enviados pelo cliente
         read_only_fields = [
             'id',
             'owner',
@@ -626,6 +650,8 @@ class PMOSerializer(serializers.ModelSerializer):
         Navega recursivamente na estrutura de dados e converte objetos 
         datetime.date para strings no formato ISO 8601.
         """
+        if data is None: # Se o dado for None, retorna None
+            return None
         if isinstance(data, dict):
             return {key: self._convert_dates_to_iso(value) for key, value in data.items()}
         elif isinstance(data, list):
@@ -634,7 +660,21 @@ class PMOSerializer(serializers.ModelSerializer):
             return data.isoformat()
         else:
             return data
-
+        
+    def _parse_date_or_none(self, date_string):
+        """
+        Função auxiliar para converter uma string de data para um objeto date ou None.
+        Retorna None se a string for vazia ou 'null'.
+        """
+        if date_string in ['', None, 'null']: # Handle empty string or 'null' string
+            return None
+        try:
+            return datetime.date.fromisoformat(date_string)
+        except (ValueError, TypeError):
+            # Se o formato for inválido, podemos levantar um erro de validação
+            # ou retornar None/original string dependendo do comportamento desejado.
+            # Neste caso, para ser tolerante com campos opcionais, retornamos None.
+            return None 
 
     def create(self, validated_data):
         """
@@ -651,13 +691,20 @@ class PMOSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        """
-        Atualiza uma instância existente do Plano de Manejo Orgânico.
-        """
+        
         form_data = validated_data.pop('form_data', None)
         
-        # --- CORREÇÃO AQUI ---
-        # Atualiza os campos do modelo principal que realmente existem
+        # Converte strings vazias/null para None para os campos de data relevantes durante o update
+        if form_data and 'secao_avaliacao_plano_manejo' in form_data:
+            if 'espaco_oac' in form_data['secao_avaliacao_plano_manejo']:
+                form_data['secao_avaliacao_plano_manejo']['espaco_oac']['data_recebimento_plano_manejo'] = \
+                    self._parse_date_or_none(form_data['secao_avaliacao_plano_manejo']['espaco_oac'].get('data_recebimento_plano_manejo'))
+            if 'status_documento' in form_data['secao_avaliacao_plano_manejo']:
+                form_data['secao_avaliacao_plano_manejo']['status_documento']['data_analise'] = \
+                    self._parse_date_or_none(form_data['secao_avaliacao_plano_manejo']['status_documento'].get('data_analise'))
+                
+        # Atualiza os campos do modelo principal que podem ser alterados
+        instance.nome_identificador = validated_data.get('nome_identificador', instance.nome_identificador) # <-- LÓGICA ADICIONADA
         instance.status = validated_data.get('status', instance.status)
         instance.version = validated_data.get('version', instance.version)
         
