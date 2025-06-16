@@ -7,6 +7,7 @@ import Coordenadas from './Coordenadas';
 import AreaPropriedade from './AreaPropriedade';
 import Historico from './Historico';
 import Situacao from './Situacao';
+import SeparacaoAreasProducaoParalela from './SeparacaoAreasProducaoParalela'; // Importe o novo componente
 
 // Este componente recebe os dados da Seção 1 e uma função para atualizá-los
 function Secao1({ data, onSectionChange }) {
@@ -24,6 +25,8 @@ function Secao1({ data, onSectionChange }) {
         <h3>Seção 1: Descrição da Propriedade</h3>
       </div>
       
+      {/* Cada sub-componente recebe a parte relevante do 'data' da Seção 1
+          e a função handleSubSectionChange para atualizar sua própria sub-seção. */}
       <DadosCadastrais data={data.dados_cadastrais} onDataChange={(newData) => handleSubSectionChange('dados_cadastrais', newData)} />
       <hr/>
       <RoteiroAcesso data={data.roteiro_acesso_propriedade} onDataChange={(newData) => handleSubSectionChange('roteiro_acesso_propriedade', newData)} />
@@ -37,6 +40,8 @@ function Secao1({ data, onSectionChange }) {
       <Historico data={data.historico_propriedade_producao_organica} onDataChange={(newData) => handleSubSectionChange('historico_propriedade_producao_organica', newData)} />
       <hr/>
       <Situacao data={data.situacao_propriedade_relacao_producao_organica} onDataChange={(newData) => handleSubSectionChange('situacao_propriedade_relacao_producao_organica', newData)} />
+      <hr/> {/* Adiciona um hr para separar visualmente */}
+      <SeparacaoAreasProducaoParalela data={data.separacao_areas_producao_paralela} onDataChange={(newData) => handleSubSectionChange('separacao_areas_producao_paralela', newData)} />
     </div>
   );
 }

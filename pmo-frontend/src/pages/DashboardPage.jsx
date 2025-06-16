@@ -2,95 +2,77 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 
 function DashboardPage() {
-  // Estados para gerenciar a UI e os dados
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [accessToken, setAccessToken] = useState(localStorage.getItem('access_token'));
-  const [pmos, setPmos] = useState([]); // Inicia como um array vazio
-  const [statusMessage, setStatusMessage] = useState('Aguardando login...');
+  const { logout } = useAuth();
+  const [pmos, setPmos] = useState([]);
+  const [statusMessage, setStatusMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate(); // Hook para navegar entre as páginas
+  const navigate = useNavigate();
 
-  // Função para buscar a lista de PMOs
-  const handleListPmos = async () => {
-    setIsLoading(true);
-    setStatusMessage('Buscando PMOs na API...');
-    try {
-      const response = await api.get('/v1/pmos/');
-      setPmos(response.data);
-      setStatusMessage(`Encontrado(s) ${response.data.length} PMO(s).`);
-    } catch (err) {
-      setStatusMessage('Falha ao buscar PMOs.');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Efeito que busca os PMOs automaticamente se o usuário já estiver logado
   useEffect(() => {
-    if (accessToken) {
-      setStatusMessage('Sessão restaurada.');
-      handleListPmos();
-    }
-  }, [accessToken]);
+    // ... a lógica de busca continua a mesma ...
+    const handleListPmos = async () => {
+      setIsLoading(true);
+      setStatusMessage('Buscando PMOs...');
+      try {
+        const response = await api.get('/v1/pmos/');
+        setPmos(response.data);
+        setStatusMessage(`Encontrado(s) ${response.data.length} PMO(s).`);
+      } catch (err) {
+        setStatusMessage('Falha ao buscar PMOs.');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    handleListPmos();
+  }, []);
 
-  // Função para autenticar o usuário
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setStatusMessage('Autenticando...');
-    try {
-      const response = await api.post('/token/', { username, password });
-      const { access, refresh } = response.data;
-      localStorage.setItem('access_token', access);
-      localStorage.setItem('refresh_token', refresh);
-      setAccessToken(access); // Isso irá disparar o useEffect para buscar os PMOs
-      setStatusMessage('Login bem-sucedido!');
-    } catch (err) {
-      setStatusMessage('Falha no login. Verifique os dados.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Função para deslogar o usuário
-  const handleLogout = () => {
-    setAccessToken(null);
-    setPmos([]);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    setStatusMessage('Você foi desconectado.');
-  };
-
-  // Função para navegar para a página de criação
   const handleCreateNew = () => {
     navigate('/pmo/novo');
   };
 
-  // Se não estiver autenticado, mostra a tela de login
-  if (!accessToken) {
-    return (
-      <div className="card">
-        <form onSubmit={handleLogin}>
-          <h2>Login</h2>
-          <div className="form-group"><label>Usuário:</label><input type="text" onChange={(e) => setUsername(e.target.value)} required /></div>
-          <div className="form-group"><label>Senha:</label><input type="password" onChange={(e) => setPassword(e.target.value)} required /></div>
-          <button type="submit" disabled={isLoading}>{isLoading ? 'Aguarde...' : 'Login'}</button>
-          {statusMessage && <p><i>{statusMessage}</i></p>}
-        </form>
-      </div>
+  // ==================================================================
+  // <<< INÍCIO DA ALTERAÇÃO: Lógica de renderização movida para cá >>>
+  // ==================================================================
+  let tableContent;
+  if (isLoading) {
+    tableContent = (
+      <tr>
+        <td colSpan="6">Carregando...</td>
+      </tr>
+    );
+  } else if (pmos.length > 0) {
+    tableContent = pmos.map(pmo => (
+      <tr key={pmo.id}>
+        <td><strong>{pmo.nome_identificador}</strong></td>
+        <td><span className={`badge bg-${pmo.status === 'APROVADO' ? 'success' : 'secondary'}`}>{pmo.status}</span></td>
+        <td>{pmo.version}</td>
+        <td>{pmo.owner_username || 'N/A'}</td>
+        <td>{new Date(pmo.updated_at).toLocaleDateString('pt-BR')}</td>
+        <td>
+          <Link to={`/pmo/${pmo.id}`} className="btn btn-sm btn-info">Ver Detalhes</Link>
+        </td>
+      </tr>
+    ));
+  } else {
+    tableContent = (
+      <tr>
+        <td colSpan="6">Nenhum PMO encontrado. Clique em "Criar Novo PMO" para começarmos.</td>
+      </tr>
     );
   }
+  // ==============================================================
+  // <<< FIM DA ALTERAÇÃO >>>
+  // ==============================================================
 
-  // Se estiver autenticado, mostra o dashboard
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 style={{ color: 'green' }}>Painel de Controle</h1>
-        <button onClick={handleLogout} className="btn btn-danger">Logout</button>
+        <button onClick={logout} className="btn btn-danger">Logout</button>
       </div>
       
       <p><i>{statusMessage}</i></p>
@@ -104,6 +86,7 @@ function DashboardPage() {
           <table className="table table-hover">
             <thead>
               <tr>
+                <th>Nome do Plano</th>
                 <th>Status</th>
                 <th>Versão</th>
                 <th>Proprietário</th>
@@ -111,24 +94,9 @@ function DashboardPage() {
                 <th>Ações</th>
               </tr>
             </thead>
+            {/* Agora o tbody apenas renderiza a variável pronta */}
             <tbody>
-              {isLoading ? (
-                <tr><td colSpan="5">Carregando...</td></tr>
-              ) : pmos.length > 0 ? (
-                pmos.map(pmo => (
-                  <tr key={pmo.id}>
-                    <td><span className={`badge bg-${pmo.status === 'APROVADO' ? 'success' : 'secondary'}`}>{pmo.status}</span></td>
-                    <td>{pmo.version}</td>
-                    <td>{pmo.form_data?.secao_1_descricao_propriedade?.dados_cadastrais?.nome_produtor || 'N/A'}</td>
-                    <td>{new Date(pmo.updated_at).toLocaleDateString('pt-BR')}</td>
-                    <td>
-                      <Link to={`/pmo/${pmo.id}`} className="btn btn-sm btn-info">Ver Detalhes</Link>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr><td colSpan="5">Nenhum PMO encontrado.</td></tr>
-              )}
+              {tableContent}
             </tbody>
           </table>
         </div>

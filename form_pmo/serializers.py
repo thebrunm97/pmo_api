@@ -279,15 +279,18 @@ class TratamentoLixoSerializer(serializers.Serializer):
 # --- Serializer Principal da Seção 6 ---
 
 class Secao6AspectosAmbientaisSerializer(serializers.Serializer):
-    promocao_biodiversidade = PromocaoBiodiversidadeSerializer(required=False)
-    fonte_agua = FonteAguaSerializer(required=False)
-    controle_uso_agua = ControleUsoAguaSerializer(required=False)
-    risco_contaminacao_agua = RiscoContaminacaoAguaSerializer(required=False)
-    riscos_contaminacao_unidade_producao = RiscosContaminacaoUnidadeProducaoSerializer(required=False)
-    medidas_minimizar_riscos_contaminacao = MedidasMinimizarRiscosContaminacaoSerializer(required=False)
-    praticas_manejo_residuos_organicos = PraticasManejoResiduosOrganicosSerializer(required=False)
-    compostagem = CompostagemSerializer(required=False)
-    tratamento_lixo = TratamentoLixoSerializer(required=False)
+    promocao_biodiversidade = serializers.CharField(required=False, allow_blank=True)
+    fonte_agua = serializers.CharField(required=False, allow_blank=True)
+    controle_uso_agua = serializers.CharField(required=False, allow_blank=True)
+    
+    ha_risco_contaminacao_agua = serializers.BooleanField(required=False, allow_null=True)
+    qual_risco_contaminacao_agua = serializers.CharField(required=False, allow_blank=True)
+    
+    riscos_contaminacao_unidade_producao = serializers.CharField(required=False, allow_blank=True)
+    medidas_minimizar_riscos_contaminacao = serializers.CharField(required=False, allow_blank=True)
+    praticas_manejo_residuos_organicos = serializers.CharField(required=False, allow_blank=True)
+    compostagem = serializers.CharField(required=False, allow_blank=True)
+    tratamento_lixo = serializers.CharField(required=False, allow_blank=True)
 
 # --- Seção 7: Aspectos Sociais ---
 class MembrosFamiliaProducaoSerializer(serializers.Serializer):
@@ -521,28 +524,20 @@ class Secao5ProducaoTerceirizadaSerializer(serializers.Serializer):
     )
     
 class Secao6AspectosAmbientaisSerializer(serializers.Serializer):
-    # Campos que armazenam strings de checkboxes
+    # Cada campo agora é um CharField ou BooleanField simples. Sem aninhamento.
     promocao_biodiversidade = serializers.CharField(required=False, allow_blank=True)
     fonte_agua = serializers.CharField(required=False, allow_blank=True)
-    riscos_contaminacao_unidade_producao = serializers.CharField(required=False, allow_blank=True)
-    praticas_manejo_residuos_organicos = serializers.CharField(required=False, allow_blank=True)
-    
-    # Campos de texto simples
+    fonte_agua_subterranea_especificacao = serializers.CharField(required=False, allow_blank=True)
     controle_uso_agua = serializers.CharField(required=False, allow_blank=True)
-    medidas_minimizar_riscos_contaminacao = serializers.CharField(required=False, allow_blank=True)
-    compostagem = serializers.CharField(required=False, allow_blank=True)
-    tratamento_lixo = serializers.CharField(required=False, allow_blank=True)
-
-    # --- CAMPO CORRIGIDO ---
-    # Este campo agora é um booleano simples no nível principal da seção
+    
     ha_risco_contaminacao_agua = serializers.BooleanField(required=False)
     qual_risco_contaminacao_agua = serializers.CharField(required=False, allow_blank=True)
     
-    riscos_contaminacao_unidade_producao = serializers.CharField(required=True, allow_blank=True)
-    medidas_minimizar_riscos_contaminacao = serializers.CharField(required=True, allow_blank=True)
-    praticas_manejo_residuos_organicos = serializers.CharField(required=True, allow_blank=True)
+    riscos_contaminacao_unidade_producao = serializers.CharField(required=False, allow_blank=True)
+    medidas_minimizar_riscos_contaminacao = serializers.CharField(required=False, allow_blank=True)
+    praticas_manejo_residuos_organicos = serializers.CharField(required=False, allow_blank=True)
     compostagem = serializers.CharField(required=False, allow_blank=True)
-    tratamento_lixo = serializers.CharField(required=True, allow_blank=True)
+    tratamento_lixo = serializers.CharField(required=False, allow_blank=True)
 
 class Secao7AspectosSociaisSerializer(serializers.Serializer):
     membros_familia_producao = MembrosFamiliaProducaoSerializer(required=True)

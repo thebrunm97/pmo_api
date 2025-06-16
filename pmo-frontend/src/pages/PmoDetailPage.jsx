@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import Secao1 from '../components/PmoForm/Secao1';
-// No futuro, importaremos aqui os componentes de visualização das outras seções
+import { initialFormData } from '../utils/formData'; // Importa o initialFormData
+import { deepMerge } from '../utils/deepMerge'; // Importa a função deepMerge
 
 function PmoDetailPage() {
   // 1. Pega o ID da URL usando um "hook" do react-router-dom
@@ -23,7 +24,17 @@ function PmoDetailPage() {
         setLoading(true);
         // Faz a chamada para o endpoint de detalhe da API
         const response = await api.get(`/v1/pmos/${pmoId}/`);
-        setPmo(response.data);
+        const fetchedPmo = response.data; // Dados brutos da API
+
+        // IMPORTANTE: Mescla os dados da API com a estrutura inicial completa
+        // Isso garante que campos que podem não existir em PMOs antigos (salvos antes da feature)
+        // sejam inicializados com valores padrão do initialFormData, evitando erros de "undefined".
+        const mergedFormData = deepMerge(initialFormData, fetchedPmo.form_data);
+
+        setPmo({
+          ...fetchedPmo,
+          form_data: mergedFormData // Usa os dados mesclados
+        });
       } catch (err) {
         setError('Falha ao carregar os detalhes do PMO. Verifique se o PMO existe ou se você tem permissão.');
         console.error(err);
