@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from '../api';
+import { supabase } from '../supabaseClient'; // IMPORTAÇÃO CORRETA
 import { initialFormData } from '../utils/formData';
 import { deepMerge } from '../utils/deepMerge';
 
@@ -14,9 +14,8 @@ import Secao4 from '../components/PmoForm/Secao4';
 import Secao5 from '../components/PmoForm/Secao5';
 import Secao6 from '../components/PmoForm/Secao6';
 
-
 /**
- * Prepara os dados do formulário para serem enviados à API.
+ * Esta função continua útil para limpar e preparar os dados antes de enviar ao banco.
  */
 const cleanFormDataForSubmission = (data) => {
   const cleanedData = deepMerge({}, data);
@@ -66,31 +65,28 @@ const cleanFormDataForSubmission = (data) => {
     }
   };
 
+  // A lógica de limpeza das tabelas continua a mesma e válida
   processSectionTables(cleanedData.secao_2_atividades_produtivas_organicas, [
     { path: ['producao_primaria_vegetal', 'produtos_primaria_vegetal'], conversions: [{ field: 'area_plantada', parser: parseToFloatOrNull }, { field: 'producao_esperada_ano', parser: parseToFloatOrNull }] },
     { path: ['producao_primaria_animal', 'animais_primaria_animal'], conversions: [{ field: 'n_de_animais', parser: parseToIntOrNull }, { field: 'area_externa', parser: parseToFloatOrNull }, { field: 'area_interna_instalacoes', parser: parseToFloatOrNull }, { field: 'media_de_peso_vivo', parser: parseToFloatOrNull }] },
     { path: ['processamento_produtos_origem_vegetal', 'produtos_processamento_vegetal'], conversions: [] },
     { path: ['processamento_produtos_origem_animal', 'produtos_processamento_animal'], conversions: [] }
   ]);
-  
   processSectionTables(cleanedData.secao_3_atividades_produtivas_nao_organicas, [
     { path: ['producao_primaria_vegetal_nao_organica', 'produtos_primaria_vegetal_nao_organica'], conversions: [{ field: 'area_plantada', parser: parseToFloatOrNull }, { field: 'producao_esperada_ano', parser: parseToFloatOrNull }] },
     { path: ['producao_primaria_animal_nao_organica', 'animais_primaria_animal_nao_organica'], conversions: [{ field: 'n_de_animais', parser: parseToIntOrNull }, { field: 'area_externa', parser: parseToFloatOrNull }, { field: 'area_interna_instalacoes', parser: parseToFloatOrNull }, { field: 'media_de_peso_vivo', parser: parseToFloatOrNull }] },
     { path: ['processamento_produtos_origem_vegetal_nao_organico', 'produtos_processamento_vegetal_nao_organico'], conversions: [] },
     { path: ['processamento_produtos_origem_animal_nao_organico', 'produtos_processamento_animal_nao_organico'], conversions: [] }
   ]);
-  
   processSectionTables(cleanedData.secao_4_animais_servico_subsistencia_companhia, [
     { path: ['animais_servico', 'lista_animais_servico'], conversions: [{ field: 'quantidade', parser: parseToIntOrNull }] },
     { path: ['animais_subsistencia_companhia_ornamentais', 'lista_animais_subsistencia'], conversions: [{ field: 'quantidade', parser: parseToIntOrNull }] }
   ]);
-  
   const secao4Data = cleanedData.secao_4_animais_servico_subsistencia_companhia;
   if (secao4Data && !secao4Data.ha_animais_servico_subsistencia_companhia?.ha_animais_servico_subsistencia_companhia) {
     delete secao4Data.animais_servico;
     delete secao4Data.animais_subsistencia_companhia_ornamentais;
   }
-
   const secao5Data = cleanedData.secao_5_producao_terceirizada;
   if (secao5Data?.produtos_terceirizados) {
     let items = secao5Data.produtos_terceirizados;
@@ -104,7 +100,6 @@ const cleanFormDataForSubmission = (data) => {
     });
     secao5Data.produtos_terceirizados = items;
   }
- 
   const avaliacao = cleanedData.secao_avaliacao_plano_manejo;
   if (avaliacao) {
     if (avaliacao.espaco_oac && (avaliacao.espaco_oac.data_recebimento_plano_manejo === '' || avaliacao.espaco_oac.data_recebimento_plano_manejo === 'null')) {
@@ -117,6 +112,7 @@ const cleanFormDataForSubmission = (data) => {
 
   return cleanedData;
 };
+
 
 // --- Componente Principal ---
 function PmoFormPage() {
@@ -141,38 +137,29 @@ function PmoFormPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Efeito para buscar os dados no modo de edição, agora usando Supabase
   useEffect(() => {
     if (isEditMode) {
       const fetchPmoData = async () => {
         setIsLoading(true);
         try {
-          const response = await api.get(`/v1/pmos/${pmoId}/`);
-          const { nome_identificador, form_data: fetchedData } = response.data;
-          
-          if (fetchedData.secao_6_aspectos_ambientais) {
-              const secao6Aninhada = fetchedData.secao_6_aspectos_ambientais;
-              const secao6Plana = {
-                  promocao_biodiversidade: secao6Aninhada.promocao_biodiversidade || '',
-                  fonte_agua: secao6Aninhada.fonte_agua || '',
-                  fonte_agua_subterranea_especificacao: secao6Aninhada.fonte_agua_subterranea_especificacao || '',
-                  controle_uso_agua: secao6Aninhada.controle_uso_agua?.controle_uso_agua ?? secao6Aninhada.controle_uso_agua ?? '',
-                  ha_risco_contaminacao_agua: secao6Aninhada.ha_risco_contaminacao_agua?.ha_risco_contaminacao_agua ?? secao6Aninhada.ha_risco_contaminacao_agua ?? null,
-                  qual_risco_contaminacao_agua: secao6Aninhada.ha_risco_contaminacao_agua?.qual_risco_contaminacao_agua ?? secao6Aninhada.qual_risco_contaminacao_agua ?? '',
-                  riscos_contaminacao_unidade_producao: secao6Aninhada.riscos_contaminacao_unidade_producao || '',
-                  medidas_minimizar_riscos_contaminacao: secao6Aninhada.medidas_minimizar_riscos_contaminacao?.medidas_minimizar_riscos_contaminacao ?? secao6Aninhada.medidas_minimizar_riscos_contaminacao ?? '',
-                  praticas_manejo_residuos_organicos: secao6Aninhada.praticas_manejo_residuos_organicos?.praticas_manejo_residuos_organicos ?? secao6Aninhada.praticas_manejo_residuos_organicos ?? '',
-                  compostagem: secao6Aninhada.compostagem?.descricao_compostagem ?? secao6Aninhada.compostagem?.compostagem ?? secao6Aninhada.compostagem ?? '',
-                  tratamento_lixo: secao6Aninhada.tratamento_lixo?.tratamento_lixo ?? secao6Aninhada.tratamento_lixo ?? '',
-              };
-              fetchedData.secao_6_aspectos_ambientais = secao6Plana;
+          const { data, error } = await supabase
+            .from('pmos')
+            .select('*')
+            .eq('id', pmoId)
+            .single(); // .single() para buscar apenas um registro
+
+          if (error) throw error;
+
+          if (data) {
+            // A lógica de merge continua útil para garantir a estrutura completa do formulário
+            const mergedFormData = deepMerge(initialFormData, data.form_data);
+            setNomeIdentificador(data.nome_identificador);
+            setFormData(mergedFormData);
           }
 
-          const mergedFormData = deepMerge(initialFormData, fetchedData);
-          setNomeIdentificador(nome_identificador);
-          setFormData(mergedFormData);
-
         } catch (err) {
-          console.error("Erro ao buscar dados do PMO:", err);
+          console.error("Erro ao buscar dados do PMO no Supabase:", err);
           setError('Não foi possível carregar os dados para edição.');
         } finally {
           setIsLoading(false);
@@ -182,44 +169,52 @@ function PmoFormPage() {
     }
   }, [pmoId, isEditMode]);
 
- const handleFormSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+  // Função para salvar e atualizar, agora usando Supabase
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  // LOG 1: Verificar o estado ANTES de qualquer processamento
-  console.log("1. ESTADO ANTES DA LIMPEZA (formData):", formData);
+    const cleanedData = cleanFormDataForSubmission(formData);
 
-  const cleanedData = cleanFormDataForSubmission(formData);
+    const payload = {
+      nome_identificador: nomeIdentificador,
+      form_data: cleanedData,
+      status: 'RASCUNHO',
+      version: 1,
+    };
 
-  // LOG 2: Verificar os dados DEPOIS do processamento da função de limpeza
-  console.log("2. DADOS APÓS A LIMPEZA (cleanedData):", cleanedData);
+    try {
+      let result;
+      if (isEditMode) {
+        // MODO EDIÇÃO: Usa update()
+        result = await supabase
+          .from('pmos')
+          .update(payload)
+          .eq('id', pmoId)
+          .select();
+      } else {
+        // MODO CRIAÇÃO: Usa insert()
+        result = await supabase
+          .from('pmos')
+          .insert(payload)
+          .select();
+      }
+      
+      const { error: submissionError } = result;
+      if (submissionError) throw submissionError;
 
-  const payload = {
-    nome_identificador: nomeIdentificador,
-    form_data: cleanedData,
-  };
+      console.log('Dados salvos com sucesso:', result.data);
+      navigate('/');
 
-  // LOG 3: Verificar o payload final que será enviado para a API
-  console.log("3. PAYLOAD FINAL ENVIADO PARA A API:", payload);
-
-  try {
-    if (isEditMode) {
-      await api.patch(`/v1/pmos/${pmoId}/`, payload);
-    } else {
-      payload.status = 'RASCUNHO';
-      payload.version = 1;
-      await api.post('/v1/pmos/', payload);
+    } catch (err) {
+      const errorMessage = err.message || "Ocorreu um erro ao salvar.";
+      setError(errorMessage);
+      console.error("Erro ao salvar no Supabase:", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-    navigate('/');
-  } catch (err) {
-    const errorData = err.response?.data ? JSON.stringify(err.response.data, null, 2) : err.message;
-    setError('Ocorreu um erro ao salvar. Verifique os campos obrigatórios e tente novamente.');
-    console.error("Erro de validação da API:", errorData);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const nextStep = (e) => {
     e.stopPropagation();
@@ -231,17 +226,13 @@ function PmoFormPage() {
   
   const renderCurrentStepComponent = () => {
     const currentSectionConfig = formSections.find(sec => sec.id === currentStep);
-
     if (!currentSectionConfig) {
       return <div key="secao-default">Seção {currentStep} não implementada.</div>;
     }
-
     const { Component, key: sectionKey } = currentSectionConfig;
-
     const handleSectionChange = (newData) => {
       setFormData(prev => ({ ...prev, [sectionKey]: newData }));
     };
-
     return (
       <Component
         key={sectionKey}

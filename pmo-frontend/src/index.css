@@ -67,3 +67,17 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.container {
+  width: 100%;
+  /* Define uma largura máxima para o conteúdo em telas grandes */
+  max-width: 1200px; /* Você pode ajustar este valor, 1140px também é comum */
+
+  /* As duas linhas seguintes centram o container na página */
+  margin-left: auto;
+  margin-right: auto;
+
+  /* Adiciona um "respiro" nas laterais para telas pequenas */
+  padding-left: 1rem;  /* 1rem = 16px */
+  padding-right: 1rem;
+}

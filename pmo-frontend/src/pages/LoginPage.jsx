@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 function LoginPage() {
-  const [username, setUsername] = useState('');
+  // --- MUDANÇA 1: Trocamos 'username' por 'email' ---
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,7 +16,8 @@ function LoginPage() {
     setError('');
     setIsSubmitting(true);
     
-    const loginError = await login(username, password);
+    // --- MUDANÇA 2: Passamos 'email' para a função de login ---
+    const loginError = await login(email, password);
 
     if (loginError) {
       setError(loginError);
@@ -30,13 +32,14 @@ function LoginPage() {
         <div className="card-body">
           <h2 className="card-title text-center">Login</h2>
           <form onSubmit={handleLogin}>
+            {/* --- MUDANÇA 3: O formulário agora pede um Email --- */}
             <div className="form-group mb-3">
-              <label>Usuário:</label>
+              <label>Email:</label>
               <input 
-                type="text" 
+                type="email" 
                 className="form-control"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)} 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)} 
                 required 
               />
             </div>

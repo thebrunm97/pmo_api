@@ -40,20 +40,20 @@ api.interceptors.response.use(
         const newAccessToken = response.data.access;
         localStorage.setItem('access_token', newAccessToken);
 
-        // Atualiza o header da requisição original com o novo token
         api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
 
-        // Retenta a requisição original
         return api(originalRequest);
 
       } catch (refreshError) {
-        // Se o refresh token também falhar/expirar, desloga o usuário
-        console.error("Refresh token inválido ou expirado.", refreshError);
+        console.error("Refresh token inválido ou expirado. Deslogando...", refreshError);
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        // Opcional: redirecionar para a página de login
-        // window.location.href = '/login'; 
+
+        // 👇 AQUI ESTÁ A MUDANÇA PRINCIPAL 👇
+        // Dispara um evento customizado para notificar a aplicação que a autenticação falhou de vez.
+        window.dispatchEvent(new Event('auth-error'));
+        
         return Promise.reject(refreshError);
       }
     }

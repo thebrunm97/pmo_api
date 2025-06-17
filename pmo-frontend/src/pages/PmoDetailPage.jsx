@@ -2,66 +2,68 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../api';
+import { supabase } from '../supabaseClient'; // MUDANÇA 1: Importa o Supabase
 import Secao1 from '../components/PmoForm/Secao1';
-import { initialFormData } from '../utils/formData'; // Importa o initialFormData
-import { deepMerge } from '../utils/deepMerge'; // Importa a função deepMerge
+import { initialFormData } from '../utils/formData';
+import { deepMerge } from '../utils/deepMerge';
 
 function PmoDetailPage() {
-  // 1. Pega o ID da URL usando um "hook" do react-router-dom
   const { pmoId } = useParams();
 
-  // 2. Estados para guardar os dados do PMO, o status de carregamento e possíveis erros
   const [pmo, setPmo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // 3. Efeito que roda assim que a página carrega para buscar os dados na API
+  // Efeito que busca os dados, agora usando Supabase
   useEffect(() => {
     const fetchPmoDetails = async () => {
-        // Reseta os estados de carregamento e erro antes de buscar os dados
       try {
         setLoading(true);
-        // Faz a chamada para o endpoint de detalhe da API
-        const response = await api.get(`/v1/pmos/${pmoId}/`);
-        const fetchedPmo = response.data; // Dados brutos da API
+        
+        // MUDANÇA 2: Lógica de busca de dados com Supabase
+        const { data, error: fetchError } = await supabase
+          .from('pmos')        // Da tabela 'pmos'
+          .select('*')       // Selecione todas as colunas
+          .eq('id', pmoId)   // Onde a coluna 'id' for igual ao pmoId da URL
+          .single();         // E retorne apenas um único resultado
 
-        // IMPORTANTE: Mescla os dados da API com a estrutura inicial completa
-        // Isso garante que campos que podem não existir em PMOs antigos (salvos antes da feature)
-        // sejam inicializados com valores padrão do initialFormData, evitando erros de "undefined".
-        const mergedFormData = deepMerge(initialFormData, fetchedPmo.form_data);
+        if (fetchError) {
+          throw fetchError;
+        }
 
-        setPmo({
-          ...fetchedPmo,
-          form_data: mergedFormData // Usa os dados mesclados
-        });
+        if (data) {
+          // A lógica de merge continua a ser uma boa prática
+          const mergedFormData = deepMerge(initialFormData, data.form_data);
+          setPmo({
+            ...data,
+            form_data: mergedFormData
+          });
+        }
+        
       } catch (err) {
-        setError('Falha ao carregar os detalhes do PMO. Verifique se o PMO existe ou se você tem permissão.');
-        console.error(err);
+        setError('Falha ao carregar os detalhes do PMO. Verifique se o PMO existe.');
+        console.error("Erro ao buscar detalhes do PMO:", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchPmoDetails();
-  }, [pmoId]); // O [pmoId] garante que a busca seja refeita se o ID na URL mudar
+  }, [pmoId]);
 
-  // Renderiza uma mensagem de carregamento enquanto busca os dados
+  // A lógica de renderização abaixo continua a mesma
   if (loading) {
     return <div className="text-center"><h2>Carregando...</h2></div>;
   }
 
-  // Renderiza uma mensagem de erro se a busca falhar
   if (error) {
     return <div className="alert alert-danger">{error}</div>;
   }
 
-  // Renderiza uma mensagem se nenhum PMO for encontrado
   if (!pmo) {
     return <div>Nenhum PMO encontrado.</div>;
   }
 
-  // 4. Se tudo deu certo, renderiza os detalhes do PMO
   return (
     <div className="pmo-detail-page">
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -75,14 +77,9 @@ function PmoDetailPage() {
         <p className="mb-0"><strong>Versão:</strong> {pmo.version}</p>
       </div>
 
-      {/* A MÁGICA DA REUTILIZAÇÃO:
-        Usamos o mesmo componente <Secao1 /> que criamos para o formulário.
-        Ele vai preencher os campos automaticamente com os dados do PMO que buscamos.
-        Por enquanto, eles aparecerão como campos de formulário, o que já é a base perfeita para a funcionalidade de "Editar"!
-      */}
       <Secao1 
         data={pmo.form_data.secao_1_descricao_propriedade} 
-        onSectionChange={() => {}} // Não precisamos de função de mudança para visualização
+        onSectionChange={() => {}} // Função vazia, pois é apenas visualização
       />
       
       {/* Aqui, no futuro, adicionaremos os componentes de visualização para Secao2, Secao3, etc. */}

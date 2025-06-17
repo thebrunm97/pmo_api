@@ -1,32 +1,47 @@
 // src/pages/DashboardPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../api';
+import { supabase } from '../supabaseClient'; // MUDANÇA 1: Importa o Supabase
 import { useAuth } from '../context/AuthContext';
 
 function DashboardPage() {
   const { logout } = useAuth();
   const [pmos, setPmos] = useState([]);
   const [statusMessage, setStatusMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Começa como true para mostrar o carregamento inicial
   const navigate = useNavigate();
 
   useEffect(() => {
-    // ... a lógica de busca continua a mesma ...
+    // MUDANÇA 2: A função de busca agora usa Supabase
     const handleListPmos = async () => {
       setIsLoading(true);
-      setStatusMessage('Buscando PMOs...');
+      setStatusMessage('Buscando seus Planos de Manejo...');
+      
       try {
-        const response = await api.get('/v1/pmos/');
-        setPmos(response.data);
-        setStatusMessage(`Encontrado(s) ${response.data.length} PMO(s).`);
+        // 'from('pmos')' -> seleciona a tabela 'pmos'
+        // 'select('*')' -> seleciona todas as colunas
+        const { data, error } = await supabase.from('pmos').select('*');
+
+        if (error) {
+          // Se o Supabase retornar um erro, nós o lançamos para o catch
+          throw error;
+        }
+
+        setPmos(data);
+        if (data.length > 0) {
+            setStatusMessage(`Encontrado(s) ${data.length} PMO(s).`);
+        } else {
+            setStatusMessage('Nenhum PMO encontrado. Clique em "Criar Novo PMO" para começar!');
+        }
+
       } catch (err) {
-        setStatusMessage('Falha ao buscar PMOs.');
-        console.error(err);
+        setStatusMessage('Falha ao buscar os Planos de Manejo.');
+        console.error("Erro ao buscar PMOs:", err.message);
       } finally {
         setIsLoading(false);
       }
     };
+
     handleListPmos();
   }, []);
 
@@ -34,39 +49,36 @@ function DashboardPage() {
     navigate('/pmo/novo');
   };
 
-  // ==================================================================
-  // <<< INÍCIO DA ALTERAÇÃO: Lógica de renderização movida para cá >>>
-  // ==================================================================
-  let tableContent;
-  if (isLoading) {
-    tableContent = (
-      <tr>
-        <td colSpan="6">Carregando...</td>
-      </tr>
-    );
-  } else if (pmos.length > 0) {
-    tableContent = pmos.map(pmo => (
+  const renderTableContent = () => {
+    if (isLoading) {
+      return (
+        <tr>
+          <td colSpan="5">Carregando...</td>
+        </tr>
+      );
+    }
+
+    if (pmos.length === 0) {
+      return (
+        <tr>
+          <td colSpan="5">Nenhum PMO encontrado.</td>
+        </tr>
+      );
+    }
+
+    return pmos.map(pmo => (
       <tr key={pmo.id}>
         <td><strong>{pmo.nome_identificador}</strong></td>
         <td><span className={`badge bg-${pmo.status === 'APROVADO' ? 'success' : 'secondary'}`}>{pmo.status}</span></td>
         <td>{pmo.version}</td>
-        <td>{pmo.owner_username || 'N/A'}</td>
-        <td>{new Date(pmo.updated_at).toLocaleDateString('pt-BR')}</td>
+        {/* MUDANÇA 3: Usando 'created_at' que vem do Supabase por padrão */}
+        <td>{new Date(pmo.created_at).toLocaleDateString('pt-BR')}</td>
         <td>
           <Link to={`/pmo/${pmo.id}`} className="btn btn-sm btn-info">Ver Detalhes</Link>
         </td>
       </tr>
     ));
-  } else {
-    tableContent = (
-      <tr>
-        <td colSpan="6">Nenhum PMO encontrado. Clique em "Criar Novo PMO" para começarmos.</td>
-      </tr>
-    );
-  }
-  // ==============================================================
-  // <<< FIM DA ALTERAÇÃO >>>
-  // ==============================================================
+  };
 
   return (
     <div>
@@ -89,14 +101,12 @@ function DashboardPage() {
                 <th>Nome do Plano</th>
                 <th>Status</th>
                 <th>Versão</th>
-                <th>Proprietário</th>
-                <th>Última Atualização</th>
+                <th>Criado em</th>
                 <th>Ações</th>
               </tr>
             </thead>
-            {/* Agora o tbody apenas renderiza a variável pronta */}
             <tbody>
-              {tableContent}
+              {renderTableContent()}
             </tbody>
           </table>
         </div>

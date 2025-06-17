@@ -1,61 +1,90 @@
 // src/context/AuthContext.jsx
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api';
+import { supabase } from '../supabaseClient'; // Importamos o supabase
 
 // 1. Criar o Contexto
 const AuthContext = createContext(null);
 
-// 2. Criar o Provedor do Contexto (o componente que vai gerenciar o estado)
+// 2. Criar o Provedor do Contexto
 export function AuthProvider({ children }) {
-  const [authToken, setAuthToken] = useState(localStorage.getItem('access_token'));
-  const [user, setUser] = useState(null); // Poderíamos guardar dados do usuário aqui
-  const [isLoading, setIsLoading] = useState(true); // Para saber se estamos verificando o token inicial
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('supabase.auth.token')); // Lendo o token do Supabase
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Efeito que roda na inicialização para verificar se já existe um token
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      setAuthToken(token);
-      // Aqui você poderia fazer uma chamada à API para buscar dados do usuário
-      // api.get('/api/me').then(response => setUser(response.data));
-    }
-    setIsLoading(false); // Finaliza o carregamento inicial
-  }, []);
-
-  // Função de Login
-  const login = async (username, password) => {
-    try {
-      const response = await api.post('/token/', { username, password });
-      const { access, refresh } = response.data;
-      
-      localStorage.setItem('access_token', access);
-      localStorage.setItem('refresh_token', refresh);
-      
-      setAuthToken(access);
-      // setUser(decoded_user_data); // Se o token for JWT e tiver dados do usuário
-      
-      navigate('/'); // Redireciona para o dashboard após o login
-      return null; // Retorna null em caso de sucesso
-    } catch (err) {
-      console.error("Erro no login:", err);
-      // Retorna a mensagem de erro para ser exibida no formulário
-      return err.response?.data?.detail || "Falha no login. Verifique os dados.";
-    }
-  };
-
-  // Função de Logout
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+  // Função de logout centralizada
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setAuthToken(null);
     setUser(null);
-    navigate('/login'); // Redireciona para a página de login após o logout
+    navigate('/login');
+  }, [navigate]);
+
+  // Efeito que roda na inicialização para verificar a sessão do usuário
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setAuthToken(session.access_token);
+        setUser(session.user);
+      }
+      setIsLoading(false);
+    };
+
+    checkUser();
+
+    // Ouvinte para mudanças no estado de autenticação (login, logout, etc.)
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setAuthToken(session?.access_token ?? null);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // Função de limpeza para remover o ouvinte
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+
+
+  // Nova função de Login com Supabase
+  const login = async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) throw error;
+
+      console.log("Login com Supabase bem-sucedido:", data);
+      navigate('/');
+      return null;
+
+    } catch (err) {
+      console.error("Erro no login com Supabase:", err.message);
+      return err.message || "Falha no login. Verifique os dados.";
+    }
   };
 
-  // 3. O valor que será compartilhado com os componentes filhos
+
+  // Ouve por falhas de autenticação em chamadas da API (se ainda usar um interceptor customizado)
+  // Se o supabase-js já trata tudo, este pode não ser mais necessário, mas não faz mal manter
+  useEffect(() => {
+    const handleAuthError = () => {
+      console.log("Evento de erro de autenticação detectado. Deslogando...");
+      logout();
+    };
+    window.addEventListener('auth-error', handleAuthError);
+    return () => {
+      window.removeEventListener('auth-error', handleAuthError);
+    };
+  }, [logout]);
+
+
   const value = {
     authToken,
     user,
@@ -66,13 +95,12 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {/* Não renderiza nada até que a verificação inicial do token seja concluída */}
       {!isLoading && children}
     </AuthContext.Provider>
   );
 }
 
-// 4. Hook customizado para facilitar o uso do contexto
+// 4. Hook customizado para facilitar o uso do contexto (com o 'export' correto)
 export function useAuth() {
   return useContext(AuthContext);
 }
