@@ -13,6 +13,18 @@ import Secao3 from '../components/PmoForm/Secao3';
 import Secao4 from '../components/PmoForm/Secao4';
 import Secao5 from '../components/PmoForm/Secao5';
 import Secao6 from '../components/PmoForm/Secao6';
+import Secao7 from '../components/PmoForm/Secao7';
+import Secao8 from '../components/PmoForm/Secao8';
+import Secao9 from '../components/PmoForm/Secao9';
+import Secao10 from '../components/PmoForm/Secao10';
+import Secao11 from '../components/PmoForm/Secao11';
+import Secao12 from '../components/PmoForm/Secao12';
+import Secao13 from '../components/PmoForm/Secao13';
+import Secao14 from '../components/PmoForm/Secao14';
+import Secao15 from '../components/PmoForm/Secao15';
+import Secao16 from '../components/PmoForm/Secao16';
+import Secao17 from '../components/PmoForm/Secao17';
+import Secao18 from '../components/PmoForm/Secao18';
 
 /**
  * Esta função continua útil para limpar e preparar os dados antes de enviar ao banco.
@@ -126,7 +138,19 @@ function PmoFormPage() {
     { id: 3, key: 'secao_3_atividades_produtivas_nao_organicas', Component: Secao3 },
     { id: 4, key: 'secao_4_animais_servico_subsistencia_companhia', Component: Secao4 },
     { id: 5, key: 'secao_5_producao_terceirizada', Component: Secao5 }, 
-    { id: 6, key: 'secao_6_aspectos_ambientais', Component: Secao6 }
+    { id: 6, key: 'secao_6_aspectos_ambientais', Component: Secao6 },
+    { id: 7, key: 'secao_7_aspectos_sociais', Component: Secao7 },
+    { id: 8, key: 'secao_8_insumos_equipamentos', Component: Secao8 },
+    { id: 9, key: 'secao_9_propagacao_vegetal', Component: Secao9 },
+    { id: 10, key: 'secao_10_fitossanidade', Component: Secao10 },
+    { id: 11, key: 'secao_11_colheita', Component: Secao11 },
+    { id: 12, key: 'secao_12_pos_colheita', Component: Secao12 },
+    { id: 13, key: 'secao_13_producao_animal', Component: Secao13 },
+    { id: 14, key: 'secao_14_comercializacao', Component: Secao14 },
+    { id: 15, key: 'secao_15_rastreabilidade', Component: Secao15 },
+    { id: 16, key: 'secao_16_sac', Component: Secao16 },
+    { id: 17, key: 'secao_17_opiniao', Component: Secao17 },
+    { id: 18, key: 'secao_18_anexos', Component: Secao18 }
   ];
 
   const [currentStep, setCurrentStep] = useState(1);

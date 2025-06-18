@@ -86,22 +86,26 @@ export const initialFormData = {
     compostagem: '',
     tratamento_lixo: ''
   },
+
   // =================== FIM DA CORREÇÃO ====================
-  secao_7_aspectos_sociais: {
-    membros_familia_producao: { membros_familia_producao: '' },
-    mao_de_obra_nao_familiar: {
-      ha_mao_de_obra_nao_familiar: false,
-      quantidade_mao_de_obra: 0,
-      relacao_trabalhista: '',
-    },
-    incentivo_atividades_educativas: { incentiva_atividades_educativas: '' },
-    relacionamento_outros_produtores: { relacionamento_outros_produtores: '' },
+   secao_7_aspectos_sociais: {
+    membros_familia_producao: [
+      { nome: '', parentesco: '', funcao: '' } // Começa com uma linha vazia
+    ],
+    ha_mao_de_obra_nao_familiar: null, // null para não ter Sim/Não pré-selecionado
+    quantidade_mao_de_obra: '',
+    relacao_trabalhista: '', // Para os checkboxes de relação trabalhista
+    incentivo_atividades_educativas: '', // Para os checkboxes de incentivo
+    incentivo_atividades_outros: '', // Para o campo "Outras. Quais?"
+    relacionamento_outros_produtores: '' // Para o último grupo de checkboxes
+  
   },
   secao_8_insumos_equipamentos: {
-    insumos_melhorar_fertilidade: { insumos_melhorar_fertilidade: [] },
+    insumos_melhorar_fertilidade: [], // A tabela continua como um array
     insumos_producao_nao_organica: { insumos_producao_nao_organica: '' },
-    controle_insumos_producao_paralela: { controle_insumos_producao_paralela: '' },
-  },
+    controle_insumos_producao_paralela: { controle_insumos_producao_paralela: '' }
+  
+},
   secao_9_propagacao_vegetal: {
     origem_sementes_mudas_organicas: { sementes_mudas_organicas: [] },
     tratamento_sementes_mudas: { tratamento_sementes_mudas: '' },
@@ -111,23 +115,24 @@ export const initialFormData = {
     cuidados_uso_materiais_transgenicos_nao_organica: { cuidados_uso_materiais_transgenicos_nao_organica: '' },
   },
   secao_10_fitossanidade: {
-    controle_pragas_doencas: { controle_pragas_doencas: [] },
-    manejo_plantas_daninhas: { manejo_plantas_daninhas: '' },
+    // Para a Tabela 10.1 - INICIALIZADO COMO ARRAY
+    controle_pragas_doencas: [],
+    // Para o CheckboxGroup 10.2
+    manejo_plantas_daninhas: '',
+    manejo_plantas_daninhas_outros: ''
   },
   secao_11_colheita: {
     controle_colheita_organicos: { controle_colheita_organicos: '' },
     controle_colheita_nao_organicos: { controle_colheita_nao_organicos: '' },
   },
+
+  // =================== SEÇÃO 12 PÓS-COLHEITA ==================
   secao_12_pos_colheita: {
     higienizacao_produtos_organicos: { higienizacao_produtos_organicos: '' },
-    processamento_producao_organica: {
-      ha_processamento_producao_organica: false,
-      descricao_processamento_producao_organica: '',
-    },
-    processamento_producao_paralela: {
-      ha_processamento_producao_paralela: false,
-      descricao_processamento_producao_paralela: '',
-    },
+    ha_processamento_producao_organica: null,
+    descricao_processamento_producao_organica: { descricao_processamento_producao_organica: '' },
+    ha_processamento_producao_paralela: null,
+    descricao_processamento_producao_paralela: { descricao_processamento_producao_paralela: '' },
     higienizacao_equipamentos_instalacoes: { higienizacao_equipamentos_instalacoes: '' },
     acondicionamento_produtos: {
       embalados_envasados_produtos: '',
@@ -135,53 +140,78 @@ export const initialFormData = {
       granel_produtos: '',
       granel_descricao: '',
     },
-    rotulagem_produtos: {
-      produtos_sao_rotulados: false,
-      descricao_rotulagem: '',
-    },
-    procedimentos_armazenamento: { procedimentos_armazenamento: '' },
+    produtos_sao_rotulados: null,
+    descricao_rotulagem: { descricao_rotulagem: '' },
+    procedimentos_armazenamento: '',
+    procedimentos_armazenamento_outros: '',
     controle_pragas_instalacoes: { controle_pragas_instalacoes: '' },
     transporte_produtos_organicos: { transporte_produtos_organicos: '' },
   },
+
+  // =================== SEÇÃO 13 ====================
   secao_13_producao_animal: {
-    tecnicas_melhoria_pastos: { tecnicas_melhoria_pastos: '' },
-    reproducao_animais: { metodos_reproducao_animais: '' },
+    tecnicas_melhoria_pastos: '',
+    tecnicas_melhoria_pastos_outros: '',
+    reproducao_animais: '',
+    reproducao_animais_monta_natural_detalhes: '',
+    reproducao_animais_metodos_artificiais_detalhes: '',
+    reproducao_animais_outros: '',
     aquisicao_animais: {
-      sistema_producao_aquisicao_animais: '',
-      especificacao_aquisicao_animais: '',
+      sistema_producao_aquisicao: '',
+      especificacao_aquisicao_animais: { especificacao_aquisicao_animais: '' }
     },
-    evolucao_plantel: { evolucao_plantel: [] },
-    nutricao_animal: { nutricao_animal: [] },
-    plano_anual_alimentacao_animal: { plano_anual_alimentacao_animal: [] },
+    evolucao_plantel: [], // Tabela 13.4
+    nutricao_animal: [],   // Tabela 13.5
+    plano_anual_alimentacao_animal: [{
+      alimento: '', Jan: false, Fev: false, Mar: false, Abr: false, 
+      Mai: false, Jun: false, Jul: false, Ago: false, Set: false, 
+      Out: false, Nov: false, Dez: false
+    }],
     alimentacao_mamiferos_jovens: { alimentacao_mamiferos_jovens: '' },
-    bem_estar_animais: { promocao_bem_estar_animais: '' },
+    bem_estar_animais: '',
+    bem_estar_animais_manejo_cama: '',
+    bem_estar_animais_outras_formas: '',
     manejo_sanitario_animal: {
       promocao_saude_animal: { promocao_saude_animal: '' },
       controle_vermes_parasitas: { controle_vermes_parasitas: '' },
-      tratamento_animais_doentes: { tratamento_animais_doentes: [] },
+      tratamento_animais_doentes: [], // Tabela 13.9.3 (não mostrada nas imagens, mas presente no modelo de dados)
       castracao_animais: { castracao_animais: '' },
       corte_chifres_mochamento_marcacoes: { corte_chifres_mochamento_marcacoes: '' },
-      vacinacao_animais: { vacinacao_animais: '' },
-    },
+      vacinacao_animais: { vacinacao_animais: '' }
+    }
   },
+
   secao_14_comercializacao: {
-    canais_comercializacao: { canais_comercializacao: '' },
+    canais_comercializacao: '', // Para guardar as opções de checkbox marcadas
+    canais_atacadistas_quais: '',
+    canais_feiras_quais: '',
+    canais_cooperativas_quais: '',
+    canais_outros_quais: ''
   },
+
+  // =================== SEÇÃO 15 RASTREABILIDADE ==================
   secao_15_rastreabilidade: {
+    // Para a pergunta 15.1, usando o padrão aninhado
     registros_rastreabilidade: { registros_rastreabilidade: '' },
-    frequencia_registros: { frequencia_registros_anotacoes: '' },
+    // Para o CheckboxGroup 15.2
+    frequencia_registros_anotacoes: '',
+    frequencia_registros_anotacoes_outros: ''
   },
+  // =================== SEÇÃO 16 SAC ==================
   secao_16_sac: {
-    formas_reclamacoes: { formas_reclamacoes_criticas: '' },
-    tratamento_reclamacoes: { tratamento_reclamacoes_criticas: '' },
+    formas_reclamacoes_criticas: { formas_reclamacoes_criticas: '' },
+    tratamento_reclamacoes_criticas: { tratamento_reclamacoes_criticas: '' }
   },
+  // =================== SEÇÃO 17 OPINIÃO ==================  
   secao_17_opiniao: {
-    principais_problemas: { principais_problemas_producao_organica: '' },
-    principais_vantagens: { principais_vantagens_producao_organica: '' },
-    outras_informacoes: { outras_informacoes_necessarias: '' },
+    principais_problemas_producao_organica: { principais_problemas_producao_organica: '' },
+    principais_vantagens_producao_organica: { principais_vantagens_producao_organica: '' },
+    outras_informacoes_necessarias: { outras_informacoes_necessarias: '' }
   },
+  // =================== SEÇÃO 18 ANEXOS ==================  
   secao_18_anexos: {
-    lista_anexos: { lista_anexos: [] },
+  // A lista de anexos, como previsto no PRD, começa como um array vazio
+    lista_anexos: []
   },
   secao_avaliacao_plano_manejo: {
     espaco_oac: { data_recebimento_plano_manejo: 'null' },

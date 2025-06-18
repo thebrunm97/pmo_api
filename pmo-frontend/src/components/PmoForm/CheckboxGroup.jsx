@@ -10,11 +10,15 @@ function CheckboxGroup({
   otherValue, 
   onOtherChange,
   otherName,
-  otherPlaceholder = "Por favor, especifique..." // Placeholder padrão
+  otherPlaceholder = "Por favor, especifique..."
 }) {
   
-  // Divide a string de dados em um array para verificar facilmente o que está selecionado
-  const selectedOptions = selectedString ? selectedString.split('; ').filter(Boolean) : [];
+  // ================== INÍCIO DA CORREÇÃO DEFINITIVA ==================
+  // GARANTIA FINAL: Força a conversão para String, tratando null/undefined.
+  // O operador '??' trata null/undefined, e String() converte qualquer outra coisa.
+  const guaranteedString = String(selectedString ?? '');
+  const selectedOptions = guaranteedString.split('; ').filter(Boolean);
+  // =================== FIM DA CORREÇÃO DEFINITIVA ====================
   
   const handleCheckboxChange = (e) => {
     const { value, checked } = e.target;
@@ -26,11 +30,9 @@ function CheckboxGroup({
       newSelected = newSelected.filter(option => option !== value);
     }
     
-    // Junta o array de volta em uma string para salvar
     onSelectionChange(newSelected.join('; '));
   };
 
-  // Verifica se a opção que aciona o campo de texto está selecionada
   const isOtherSelected = otherOption && selectedOptions.includes(otherOption);
 
   return (
@@ -56,11 +58,10 @@ function CheckboxGroup({
         ))}
       </div>
       
-      {/* Se a opção "other" estiver selecionada, renderiza o campo de texto */}
       {isOtherSelected && (
         <div className="mt-2">
           <textarea 
-            name={otherName} // O nome do campo para o state
+            name={otherName}
             value={otherValue || ''} 
             onChange={onOtherChange} 
             className="form-control" 
