@@ -546,7 +546,10 @@ class Secao7AspectosSociaisSerializer(serializers.Serializer):
     relacionamento_outros_produtores = RelacionamentoOutrosProdutoresSerializer(required=True)
 
 class Secao8InsumosEquipamentosSerializer(serializers.Serializer):
-    insumos_melhorar_fertilidade = InsumosMelhorarFertilidadeSerializer(required=True)
+    
+    insumos_melhorar_fertilidade = serializers.ListField(
+        child=InsumoFertilidadeItemSerializer(), required=True
+    )
     insumos_producao_nao_organica = InsumosProducaoNaoOrganicaSerializer(required=False)
     controle_insumos_producao_paralela = ControleInsumosProducaoParalelaSerializer(required=False)
     

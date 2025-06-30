@@ -1,65 +1,141 @@
 # form_pmo/views.py
 
-from django.shortcuts import render  # Import necessário para renderizar a página HTML
-from rest_framework import viewsets, permissions, filters
+import os
+import requests  # <-- Usaremos requests para a chamada direta
+from rest_framework import viewsets, permissions, filters, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import action
+from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import render
+from django.contrib.auth.models import User
+# A linha 'from supabase import ...' foi removida.
+
 from .models import PMO
 from .serializers import PMOSerializer
+from .tasks import generate_pmo_pdf_task
 
+# --- Classe de Paginação Padrão ---
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+# --- ViewSet para o CRUD de Planos de Manejo Orgânico ---
 class PMOViewSet(viewsets.ModelViewSet):
     """
     API endpoint que permite que os PMOs sejam visualizados ou editados.
-
-    Este ViewSet fornece as ações de CRUD completas e suporta filtragem,
-    busca e ordenação dos resultados. A segurança garante que os usuários
-    só possam interagir com seus próprios PMOs.
     """
     serializer_class = PMOSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
-    # --- ADIÇÕES PARA FILTRAGEM, BUSCA E ORDENAÇÃO ---
-
-    # 1. Define quais "plugins" de filtro a view irá usar.
     filter_backends = [
-        DjangoFilterBackend,      # Para filtros exatos (ex: ?status=APROVADO)
-        filters.SearchFilter,     # Para busca textual (ex: ?search=produtor)
-        filters.OrderingFilter    # Para ordenação (ex: ?ordering=status)
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter
     ]
-
-    # 2. Define os campos para o DjangoFilterBackend (filtros exatos)
     filterset_fields = ['status', 'version']
-
-    # 3. Define os campos para o SearchFilter (busca textual)
-    #    Note a notação com duplo underscore para buscar dentro do JSONField!
     search_fields = ['form_data__secao_1_descricao_propriedade__dados_cadastrais__nome_produtor']
-
-    # 4. Define os campos permitidos para o OrderingFilter
     ordering_fields = ['status', 'version', 'updated_at', 'created_at']
-    
-    # 5. Define a ordenação padrão para todas as listagens
     ordering = ['-updated_at']
-
 
     def get_queryset(self):
         """
         Esta view deve retornar uma lista de todos os PMOs
-        para o usuário atualmente autenticado. A ordenação padrão é
-        controlada pelo atributo 'ordering' da classe.
+        para o usuário atualmente autenticado.
         """
-        # self.request.user está disponível aqui graças ao IsAuthenticated
-        # O .order_by() não é mais necessário aqui, pois o OrderingFilter cuida disso.
         return PMO.objects.filter(owner=self.request.user)
 
     def perform_create(self, serializer):
         """
         Define o usuário logado como o 'owner' do novo PMO ao criá-lo.
         """
-        # O DRF passa o serializer validado para este método.
-        # Nós apenas adicionamos o 'owner' antes de salvar.
         serializer.save(owner=self.request.user)
+    
+    # --- AÇÃO ADICIONADA: Gatilho para a Geração de PDF ---
+    @action(detail=True, methods=['post'], url_path='export-pdf')
+    def export_pdf(self, request, pk=None):
+        """
+        Endpoint para iniciar a geração de um PDF para um PMO específico.
+        """
+        try:
+            pmo = self.get_object()
+            generate_pmo_pdf_task.delay(str(pmo.id))
+            return Response(
+                {'status': 'A geração do seu PDF foi iniciada e será processada em segundo plano.'},
+                status=status.HTTP_202_ACCEPTED
+            )
+        except Exception as e:
+            print(f"ERRO ao iniciar a geração de PDF para o PMO ID {pk}: {e}")
+            return Response(
+                {'error': 'Não foi possível iniciar a geração do PDF.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-        from django.shortcuts import render
 
+# --- Endpoint para Sincronização de Autenticação (VERSÃO CORRIGIDA) ---
+class SupabaseSync(APIView):
+    """
+    Endpoint para sincronizar a autenticação do Supabase com o Django.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        supabase_access_token = request.data.get('access_token')
+
+        if not supabase_access_token:
+            return Response({"error": "O token de acesso do Supabase é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            url: str = os.environ.get("VITE_SUPABASE_URL")
+            key: str = os.environ.get("VITE_SUPABASE_ANON_KEY")
+            
+            if not url or not key:
+                print("ERRO: Variáveis de ambiente do Supabase não configuradas no backend.")
+                return Response({"error": "Configuração do servidor incompleta."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # --- A MUDANÇA CRÍTICA: Chamada de API direta em vez da biblioteca ---
+            headers = {'apikey': key, 'Authorization': f'Bearer {supabase_access_token}'}
+            user_info_url = f'{url}/auth/v1/user'
+            
+            response = requests.get(user_info_url, headers=headers)
+            response.raise_for_status() # Lança um erro se a resposta for 4xx ou 5xx
+            
+            supabase_user_data = response.json()
+            user_email = supabase_user_data.get('email')
+            # --- Fim da mudança ---
+
+            if not user_email:
+                 return Response({"error": "Não foi possível obter o e-mail do token do Supabase."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user_django, created = User.objects.get_or_create(
+                username=user_email,
+                defaults={'email': user_email}
+            )
+            
+            if created:
+                print(f"Novo utilizador criado no Django: {user_email}")
+
+            refresh = RefreshToken.for_user(user_django)
+            
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                return Response({"error": "Token do Supabase inválido ou expirado"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"error": f"Erro ao validar token com Supabase: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            print(f"ERRO INESPERADO na Sincronização: {e}")
+            return Response({"error": "Ocorreu um erro inesperado durante a sincronização."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- View para a Página de Teste (Mantida) ---
 def pmo_test_page(request):
     """
     Renderiza a página HTML de teste para interagir com a API.

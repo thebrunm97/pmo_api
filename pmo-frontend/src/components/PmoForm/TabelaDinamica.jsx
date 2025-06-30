@@ -1,8 +1,16 @@
-// src/components/PmoForm/TabelaDinamica.jsx
+// src/components/PmoForm/TabelaDinamica_MUI.jsx (Versão aprimorada com seletor de unidade)
 
 import React from 'react';
+// <<< 1. ADICIONADO FormControl e Select PARA O SELETOR DE UNIDADE >>>
+import { 
+  Table, TableBody, TableCell, TableContainer, 
+  TableHead, TableRow, Paper, TextField, Button, 
+  Typography, IconButton, Box, FormControl, Select, MenuItem
+} from '@mui/material';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-function TabelaDinamica({ title, columns, data, onDataChange, itemName = 'Item', itemNoun = 'o' }) {
+function TabelaDinamicaMUI({ title, columns, data, onDataChange, itemName = 'Item', itemNoun = 'o' }) {
   const safeData = Array.isArray(data) ? data : [];
 
   const handleItemChange = (index, fieldKey, value) => {
@@ -11,8 +19,16 @@ function TabelaDinamica({ title, columns, data, onDataChange, itemName = 'Item',
     onDataChange(newData);
   };
 
+  // <<< 2. FUNÇÃO "ADICIONAR" AGORA PREPARA O CAMPO DE UNIDADE TAMBÉM >>>
   const adicionarItem = () => {
-    const novoItem = columns.reduce((acc, col) => ({ ...acc, [col.key]: '' }), {});
+    const novoItem = columns.reduce((acc, col) => {
+      acc[col.key] = ''; // Inicializa o campo principal
+      // Se a coluna tiver um seletor de unidade, inicializa o campo da unidade com a primeira opção
+      if (col.unitSelector) {
+        acc[col.unitSelector.key] = col.unitSelector.options[0] || '';
+      }
+      return acc;
+    }, {});
     onDataChange([...safeData, novoItem]);
   };
 
@@ -22,44 +38,74 @@ function TabelaDinamica({ title, columns, data, onDataChange, itemName = 'Item',
   };
 
   return (
-    <div className="form-group mb-4">
-      <h5 className="card-title">{title}</h5>
-      <div className="table-responsive">
-        <table className="table table-bordered table-sm">
-          <thead className="table-light">
-            <tr>
-              {columns.map(col => <th key={col.key}>{col.header}</th>)}
-              <th style={{ width: '100px' }}>Ação</th>
-            </tr>
-          </thead>
-          <tbody>
+    <Box sx={{ my: 2 }}>
+      {title && <Typography variant="h6" gutterBottom>{title}</Typography>}
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {columns.map(col => <TableCell key={col.key} sx={{ fontWeight: 'bold' }}>{col.header}</TableCell>)}
+              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Ação</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {safeData.map((item, index) => (
-              <tr key={index}>
+              <TableRow key={index}>
                 {columns.map(col => (
-                  <td key={col.key}>
-                    <input
-                      type={col.type || 'text'}
-                      step={col.type === 'number' ? '0.01' : undefined}
-                      className="form-control"
-                      placeholder={col.placeholder || col.header}
-                      value={item[col.key] || ''}
-                      onChange={(e) => handleItemChange(index, col.key, e.target.value)}
-                    />
-                  </td>
+                  <TableCell key={col.key}>
+                    {/* <<< 3. LÓGICA CONDICIONAL PARA RENDERIZAR O CAMPO CORRETO >>> */}
+                    {col.unitSelector ? (
+                      // Se a coluna tiver um seletor de unidade, renderiza o campo de valor + o seletor
+                      <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1.5 }}>
+                        <TextField
+                          type={col.type || 'text'}
+                          value={item[col.key] || ''}
+                          onChange={(e) => handleItemChange(index, col.key, e.target.value)}
+                          variant="standard"
+                          fullWidth
+                          InputProps={{ disableUnderline: true }}
+                        />
+                        <FormControl variant="standard" sx={{ minWidth: 65 }}>
+                          <Select
+                            value={item[col.unitSelector.key] || col.unitSelector.options[0]}
+                            onChange={(e) => handleItemChange(index, col.unitSelector.key, e.target.value)}
+                          >
+                            {col.unitSelector.options.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    ) : (
+                      // Caso contrário, renderiza apenas o campo de texto padrão
+                      <TextField
+                        type={col.type || 'text'}
+                        value={item[col.key] || ''}
+                        onChange={(e) => handleItemChange(index, col.key, e.target.value)}
+                        variant="standard"
+                        fullWidth
+                        InputProps={{ disableUnderline: true }}
+                      />
+                    )}
+                  </TableCell>
                 ))}
-                <td>
-                  <button type="button" className="btn btn-danger btn-sm" onClick={() => removerItem(index)}>Remover</button>
-                </td>
-              </tr>
+                <TableCell align="center">
+                  <IconButton onClick={() => removerItem(index)} color="error" size="small">
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
-      <button type="button" className="btn btn-outline-primary mt-2" onClick={adicionarItem}>
-        + Adicionar nov{itemNoun} {itemName}
-      </button>
-    </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Button
+        startIcon={<AddCircleOutlineIcon />}
+        onClick={adicionarItem}
+        sx={{ mt: 2 }}
+      >
+        Adicionar nov{itemNoun} {itemName}
+      </Button>
+    </Box>
   );
 }
 
-export default TabelaDinamica;
+export default TabelaDinamicaMUI;

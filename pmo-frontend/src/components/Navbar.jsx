@@ -1,29 +1,33 @@
 // src/components/Navbar.jsx
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Importamos o nosso hook de autenticação
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Navbar() {
-  // Usamos o contexto para saber se há um usuário logado e para aceder à função de logout
   const { authToken, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
-    // Usando classes do Bootstrap para uma estilização rápida e bonita
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-      <div className="container-fluid">
+      <div className="container">
         <Link className="navbar-brand" to="/">
-          Meus PMOs
+          PMO Inteligente
         </Link>
-
         <div className="d-flex">
           {authToken ? (
-            // Se o usuário estiver logado, mostra o botão de Logout
-            <button onClick={logout} className="btn btn-outline-secondary">
-              Logout
-            </button>
+            <>
+              <Link to="/" className="btn btn-outline-light me-2">Painel</Link>
+              <button onClick={handleLogout} className="btn btn-outline-secondary">
+                Logout
+              </button>
+            </>
           ) : (
-            // Se não estiver logado, mostra o botão de Login
             <Link to="/login" className="btn btn-outline-primary">
               Login
             </Link>

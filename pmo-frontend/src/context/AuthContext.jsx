@@ -1,106 +1,112 @@
 // src/context/AuthContext.jsx
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { supabase } from '../supabaseClient';
+import api from '../api'; // Nossa instância centralizada do axios para a API Django
 
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient'; // Importamos o supabase
+const AuthContext = createContext();
 
-// 1. Criar o Contexto
-const AuthContext = createContext(null);
-
-// 2. Criar o Provedor do Contexto
 export function AuthProvider({ children }) {
-  const [authToken, setAuthToken] = useState(() => localStorage.getItem('supabase.auth.token')); // Lendo o token do Supabase
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Função de logout centralizada
-  const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setAuthToken(null);
-    setUser(null);
-    navigate('/login');
-  }, [navigate]);
-
-  // Efeito que roda na inicialização para verificar a sessão do usuário
   useEffect(() => {
-    const checkUser = async () => {
+    // Esta função verifica a sessão inicial e sincroniza com o backend Django
+    const initializeSession = async () => {
+      // 1. Pega a sessão atual do Supabase
       const { data: { session } } = await supabase.auth.getSession();
+      
+      updateSessionState(session);
+
+      // 2. Se houver uma sessão, tentamos sincronizar com o Django
       if (session) {
-        setAuthToken(session.access_token);
-        setUser(session.user);
+        await syncWithDjango(session.access_token);
       }
-      setIsLoading(false);
+      
+      setLoading(false);
     };
 
-    checkUser();
+    initializeSession();
 
-    // Ouvinte para mudanças no estado de autenticação (login, logout, etc.)
+    // Listener para mudanças no estado de autenticação (login, logout)
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setAuthToken(session?.access_token ?? null);
-        setUser(session?.user ?? null);
+      async (_event, session) => {
+        updateSessionState(session);
+        
+        if (session) {
+          // Utilizador fez login ou a sessão foi atualizada. Sincronizamos.
+          await syncWithDjango(session.access_token);
+        } else {
+          // Utilizador fez logout. Limpamos os tokens do Django.
+          clearDjangoTokens();
+        }
       }
     );
 
-    // Função de limpeza para remover o ouvinte
     return () => {
-      authListener?.subscription.unsubscribe();
+      // Limpa o listener quando o componente é desmontado
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
+  // Função centralizada para atualizar o estado da sessão no React
+  const updateSessionState = (currentSession) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+  };
+  
+  // Função centralizada para limpar os tokens do Django
+  const clearDjangoTokens = () => {
+      localStorage.removeItem('django_access_token');
+      localStorage.removeItem('django_refresh_token');
+      delete api.defaults.headers.common['Authorization'];
+      console.log("Tokens do Django removidos.");
+  };
 
-  // Nova função de Login com Supabase
-  const login = async (email, password) => {
+  // Função responsável por obter o token do Django
+  const syncWithDjango = async (supabaseToken) => {
+    console.log("Tentando sincronizar com o backend Django...");
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
+      const response = await api.post('/api/v1/form_pmo/auth/supabase-sync/', {
+        access_token: supabaseToken,
       });
 
-      if (error) throw error;
+      const { access, refresh } = response.data;
+      
+      // Armazena os tokens do Django no localStorage para persistência
+      localStorage.setItem('django_access_token', access);
+      localStorage.setItem('django_refresh_token', refresh);
+      
+      // Configura o header padrão do Axios para todas as futuras requisições
+      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+      
+      console.log("Sincronização com Django bem-sucedida.");
 
-      console.log("Login com Supabase bem-sucedido:", data);
-      navigate('/');
-      return null;
-
-    } catch (err) {
-      console.error("Erro no login com Supabase:", err.message);
-      return err.message || "Falha no login. Verifique os dados.";
+    } catch (error) {
+      console.error("Falha na sincronização com Django:", error.response ? error.response.data : error.message);
+      // Em caso de falha na sincronização, limpamos os tokens para evitar um estado inconsistente
+      clearDjangoTokens();
     }
   };
 
-
-  // Ouve por falhas de autenticação em chamadas da API (se ainda usar um interceptor customizado)
-  // Se o supabase-js já trata tudo, este pode não ser mais necessário, mas não faz mal manter
-  useEffect(() => {
-    const handleAuthError = () => {
-      console.log("Evento de erro de autenticação detectado. Deslogando...");
-      logout();
-    };
-    window.addEventListener('auth-error', handleAuthError);
-    return () => {
-      window.removeEventListener('auth-error', handleAuthError);
-    };
-  }, [logout]);
-
-
+  // Funções expostas pelo contexto para o resto da aplicação
   const value = {
-    authToken,
+    signUp: (data) => supabase.auth.signUp(data),
+    signIn: (data) => supabase.auth.signInWithPassword(data),
+    signOut: () => supabase.auth.signOut(), // O listener onAuthStateChange irá tratar da limpeza dos tokens
     user,
-    isLoading,
-    login,
-    logout,
+    session,
   };
 
+  // Não renderiza os componentes filhos até que a verificação inicial da sessão esteja concluída
   return (
     <AuthContext.Provider value={value}>
-      {!isLoading && children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
 
-// 4. Hook customizado para facilitar o uso do contexto (com o 'export' correto)
+// Hook personalizado para facilitar o uso do contexto
 export function useAuth() {
   return useContext(AuthContext);
 }
