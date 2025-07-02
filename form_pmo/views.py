@@ -25,42 +25,23 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 # --- ViewSet para o CRUD de Planos de Manejo Orgânico ---
 class PMOViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint que permite que os PMOs sejam visualizados ou editados.
-    """
     serializer_class = PMOSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination
-
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.SearchFilter,
-        filters.OrderingFilter
-    ]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'version']
     search_fields = ['form_data__secao_1_descricao_propriedade__dados_cadastrais__nome_produtor']
     ordering_fields = ['status', 'version', 'updated_at', 'created_at']
     ordering = ['-updated_at']
 
     def get_queryset(self):
-        """
-        Esta view deve retornar uma lista de todos os PMOs
-        para o usuário atualmente autenticado.
-        """
         return PMO.objects.filter(owner=self.request.user)
 
     def perform_create(self, serializer):
-        """
-        Define o usuário logado como o 'owner' do novo PMO ao criá-lo.
-        """
         serializer.save(owner=self.request.user)
     
-    # --- AÇÃO ADICIONADA: Gatilho para a Geração de PDF ---
     @action(detail=True, methods=['post'], url_path='export-pdf')
     def export_pdf(self, request, pk=None):
-        """
-        Endpoint para iniciar a geração de um PDF para um PMO específico.
-        """
         try:
             pmo = self.get_object()
             generate_pmo_pdf_task.delay(str(pmo.id))
@@ -75,12 +56,8 @@ class PMOViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
 # --- Endpoint para Sincronização de Autenticação (VERSÃO CORRIGIDA) ---
 class SupabaseSync(APIView):
-    """
-    Endpoint para sincronizar a autenticação do Supabase com o Django.
-    """
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -92,18 +69,18 @@ class SupabaseSync(APIView):
         try:
             url: str = os.environ.get("VITE_SUPABASE_URL")
             key: str = os.environ.get("VITE_SUPABASE_ANON_KEY")
-            
+
             if not url or not key:
                 print("ERRO: Variáveis de ambiente do Supabase não configuradas no backend.")
                 return Response({"error": "Configuração do servidor incompleta."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            # --- A MUDANÇA CRÍTICA: Chamada de API direta em vez da biblioteca ---
+            # --- A MUDANÇA CRÍTICA: Chamada de API direta ---
             headers = {'apikey': key, 'Authorization': f'Bearer {supabase_access_token}'}
             user_info_url = f'{url}/auth/v1/user'
             
             response = requests.get(user_info_url, headers=headers)
-            response.raise_for_status() # Lança um erro se a resposta for 4xx ou 5xx
-            
+            response.raise_for_status() 
+
             supabase_user_data = response.json()
             user_email = supabase_user_data.get('email')
             # --- Fim da mudança ---
@@ -134,10 +111,6 @@ class SupabaseSync(APIView):
             print(f"ERRO INESPERADO na Sincronização: {e}")
             return Response({"error": "Ocorreu um erro inesperado durante a sincronização."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-# --- View para a Página de Teste (Mantida) ---
+# --- View para a Página de Teste ---
 def pmo_test_page(request):
-    """
-    Renderiza a página HTML de teste para interagir com a API.
-    """
     return render(request, 'form_pmo/test_page.html')

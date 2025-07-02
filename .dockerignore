@@ -1,0 +1,22 @@
+# Git
+.git
+.gitignore
+
+# Ambiente Virtual Python
+venv/
+.venv/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Arquivos de IDE/Editor
+.vscode/
+.idea/
+
+# Arquivos de Base de Dados SQLite (se não for usar em produção)
+*.sqlite3
+
+# Arquivos de ambiente que não devem ir para o build
+.env

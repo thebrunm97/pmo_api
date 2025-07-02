@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-i%zi065=vljezmq+!13h6h)(9*tr^j3(k*v)8jhhzr@u94ghlk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',  # Para acesso direto local
+    '127.0.0.1',  # Para acesso direto local
+    '853f-181-219-251-23.ngrok-free.app', # Adicione a URL do ngrok
+    # Se você tiver outras URLs de desenvolvimento, adicione-as aqui
+]
 
 
 # Application definition
@@ -164,8 +169,8 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # --- Configurações do Celery ---
-CELERY_BROKER_URL = 'redis://localhost:6379/0' 
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0') # <-- MUDANÇA
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0') # <-- MUDANÇA
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
